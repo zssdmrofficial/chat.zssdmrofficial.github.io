@@ -1,1 +1,1 @@
-# chat.zssdmrofficial.github.io
+https://chat.zssdmr.dpdns.org
