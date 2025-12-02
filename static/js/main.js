@@ -1,42 +1,55 @@
 const API_KEY = "AIzaSyDo6isc-iR_Sv0XIznh4Tx7b8sn9pfKa6I";
 const MODEL = "gemma-3-27b-it";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-const CHAT_STATE_KEY = 'chat_state_v1';
 
-function isHardReload() {
-    const nav = performance.getEntriesByType && performance.getEntriesByType('navigation');
-    if (nav && nav.length) return nav[0].type === 'reload';
-    if (performance.navigation) return performance.navigation.type === 1;
-    return false;
-}
+// Firebase 來自 index.html 的初始化
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-let __restored = false;
-try {
-    const raw = sessionStorage.getItem(CHAT_STATE_KEY);
-    if (raw && !isHardReload()) {
-        const saved = JSON.parse(raw);
-        if (Array.isArray(saved.history) && saved.history.length) {
-            window.__CHAT_HISTORY__ = saved.history;
-            __restored = true;
-        }
-    } else if (isHardReload()) {
-        sessionStorage.removeItem(CHAT_STATE_KEY);
-    }
-} catch (e) {
-    console.warn('恢復聊天狀態失敗：', e);
-}
-
-if (!__restored) {
-    window.__CHAT_HISTORY__ = [
-        { role: "user", parts: [{ text: SYSTEM_INSTRUCTION }] },
-        { role: "model", parts: [{ text: "你好！我是 Gemma 助手。有什麼我可以幫你的嗎？" }] }
-    ];
-}
-let history = window.__CHAT_HISTORY__;
+let history = [];
+let currentConversationId = null;
+let currentUser = null;
 
 const chatBoxEl = document.getElementById("chat-box");
 const inputEl = document.getElementById("user-input");
 const sendButtonEl = document.getElementById("send-button");
+const conversationListEl = document.getElementById("conversation-list");
+const newChatBtn = document.getElementById("new-chat-btn");
+const loginBtn = document.getElementById("login-btn");
+const signupBtn = document.getElementById("signup-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const authEmailEl = document.getElementById("auth-email");
+const authPasswordEl = document.getElementById("auth-password");
+const authHintEl = document.getElementById("auth-hint");
+const userNameEl = document.getElementById("user-name");
+const userAvatarEl = document.getElementById("user-avatar");
+
+function setAuthHint(msg, isError = false) {
+    if (!authHintEl) return;
+    authHintEl.textContent = msg || '';
+    authHintEl.style.color = isError ? '#ef4444' : '#b4b4b4';
+}
+
+function updateUserProfile(user) {
+    if (!userNameEl || !userAvatarEl) return;
+    if (user) {
+        userNameEl.textContent = user.email || 'User';
+        userAvatarEl.textContent = (user.email || 'U').slice(0, 1).toUpperCase();
+    } else {
+        userNameEl.textContent = 'Guest';
+        userAvatarEl.textContent = 'G';
+    }
+}
+
+function clearChatUI() {
+    chatBoxEl.innerHTML = '';
+    history = [];
+}
+
+function clearHistoryList() {
+    if (!conversationListEl) return;
+    conversationListEl.innerHTML = '<div class="history-empty">登入後會顯示你的對話</div>';
+}
 
 function escapeHtml(text) {
     if (typeof text !== "string") return "";
@@ -189,6 +202,27 @@ function removeLoading(id) {
     if (el) el.remove();
 }
 
+function renderConversationList(conversations) {
+    if (!conversationListEl) return;
+    if (!conversations.length) {
+        conversationListEl.innerHTML = '<div class="history-empty">尚無對話，點擊「New chat」建立</div>';
+        return;
+    }
+
+    conversationListEl.innerHTML = '';
+    conversations.forEach(conv => {
+        const item = document.createElement('div');
+        item.className = 'history-item' + (conv.id === currentConversationId ? ' active' : '');
+        item.textContent = conv.title || '未命名對話';
+        item.dataset.id = conv.id;
+        item.addEventListener('click', () => {
+            if (conv.id === currentConversationId) return;
+            loadMessages(conv.id);
+        });
+        conversationListEl.appendChild(item);
+    });
+}
+
 function renderHistory() {
     chatBoxEl.innerHTML = '';
     history.forEach((msg, index) => {
@@ -196,6 +230,174 @@ function renderHistory() {
         renderMessage(msg.role, msg.parts[0].text);
     });
 }
+
+async function loadConversations(uid) {
+    if (!uid) {
+        clearHistoryList();
+        return;
+    }
+    try {
+        const snap = await db.collection('conversations')
+            .where('userId', '==', uid)
+            .orderBy('updatedAt', 'desc')
+            .get();
+        const conversations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderConversationList(conversations);
+        if (!currentConversationId && conversations.length) {
+            loadMessages(conversations[0].id);
+        }
+    } catch (e) {
+        console.error('載入對話列表失敗', e);
+        setAuthHint('載入對話列表失敗，請稍後再試', true);
+    }
+}
+
+async function createConversation(title = 'New chat') {
+    const user = auth.currentUser;
+    if (!user) {
+        setAuthHint('請先登入再建立對話', true);
+        return null;
+    }
+    try {
+        const doc = await db.collection('conversations').add({
+            userId: user.uid,
+            title,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        currentConversationId = doc.id;
+        history = [];
+        renderHistory();
+        await loadConversations(user.uid);
+        return doc.id;
+    } catch (e) {
+        console.error('建立對話失敗', e);
+        setAuthHint('建立對話失敗，請稍後再試', true);
+        return null;
+    }
+}
+
+async function handleNewChat() {
+    await createConversation('New chat');
+}
+
+async function loadMessages(convId) {
+    if (!convId) return;
+    const user = auth.currentUser;
+    if (!user) {
+        setAuthHint('請先登入再讀取對話', true);
+        return;
+    }
+    try {
+        const snap = await db.collection('conversations')
+            .doc(convId)
+            .collection('messages')
+            .orderBy('ts', 'asc')
+            .get();
+        history = snap.docs.map(d => {
+            const data = d.data();
+            return { role: data.role, parts: [{ text: data.content }] };
+        });
+        currentConversationId = convId;
+        renderHistory();
+        await loadConversations(user.uid);
+    } catch (e) {
+        console.error('載入訊息失敗', e);
+        setAuthHint('載入訊息失敗，請稍後再試', true);
+    }
+}
+
+async function addMessage(convId, role, content) {
+    if (!convId) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        const messagesRef = db.collection('conversations').doc(convId).collection('messages');
+        await messagesRef.add({
+            role,
+            content,
+            userId: user.uid,
+            ts: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        await db.collection('conversations').doc(convId).update({
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+    } catch (e) {
+        console.error('寫入訊息失敗', e);
+    }
+}
+
+async function updateConversationTitleIfEmpty(convId, text) {
+    if (!convId || !text) return;
+    try {
+        const docRef = db.collection('conversations').doc(convId);
+        const doc = await docRef.get();
+        const data = doc.data() || {};
+        if (!data.title || data.title === 'New chat') {
+            const title = text.slice(0, 40);
+            await docRef.set({ title }, { merge: true });
+        }
+    } catch (e) {
+        console.warn('更新標題失敗', e);
+    }
+}
+
+async function handleSignIn() {
+    const email = authEmailEl.value.trim();
+    const password = authPasswordEl.value.trim();
+    if (!email || !password) {
+        setAuthHint('請輸入 email 與密碼', true);
+        return;
+    }
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        setAuthHint('登入成功');
+    } catch (e) {
+        console.error(e);
+        setAuthHint(e.message || '登入失敗', true);
+    }
+}
+
+async function handleSignUp() {
+    const email = authEmailEl.value.trim();
+    const password = authPasswordEl.value.trim();
+    if (!email || !password) {
+        setAuthHint('請輸入 email 與密碼', true);
+        return;
+    }
+    try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        setAuthHint('註冊並登入成功');
+    } catch (e) {
+        console.error(e);
+        setAuthHint(e.message || '註冊失敗', true);
+    }
+}
+
+async function handleSignOut() {
+    try {
+        await auth.signOut();
+        clearChatUI();
+        clearHistoryList();
+        currentConversationId = null;
+        setAuthHint('已登出');
+    } catch (e) {
+        console.error(e);
+        setAuthHint('登出失敗', true);
+    }
+}
+
+auth.onAuthStateChanged(async (user) => {
+    currentUser = user;
+    updateUserProfile(user);
+    if (user) {
+        setAuthHint(`已登入：${user.email}`);
+        await loadConversations(user.uid);
+        sendButtonEl.disabled = inputEl.value.trim() === '';
+    } else {
+        setAuthHint('請先登入以儲存對話');
+        sendButtonEl.disabled = true;
+    }
+});
 
 async function callApiWithRetry(body, maxRetries = 2) {
     let attempt = 0;
@@ -232,47 +434,55 @@ async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text) return;
 
+    if (!currentUser) {
+        setAuthHint('請先登入後再發送訊息', true);
+        return;
+    }
+
+    if (!currentConversationId) {
+        const newId = await createConversation('New chat');
+        if (!newId) return;
+    }
+
     inputEl.value = "";
     inputEl.style.height = 'auto';
     sendButtonEl.disabled = true;
 
-    history.push({ role: "user", parts: [{ text }] });
+    const userMsg = { role: "user", parts: [{ text }] };
+    history.push(userMsg);
     renderMessage("user", text);
-    persistChatState();
 
     const loadingId = showLoading();
 
     try {
-        const data = await callApiWithRetry({ contents: history });
+        await addMessage(currentConversationId, "user", text);
+        await updateConversationTitleIfEmpty(currentConversationId, text);
+
+        const payloadHistory = [
+            { role: "user", parts: [{ text: SYSTEM_INSTRUCTION }] },
+            ...history
+        ];
+
+        const data = await callApiWithRetry({ contents: payloadHistory });
         removeLoading(loadingId);
 
-        if (data.candidates && data.candidates.length > 0) {
-            const responseText = data.candidates[0].content.parts[0].text;
-            history.push({ role: "model", parts: [{ text: responseText }] });
-            renderMessage("model", responseText);
-            persistChatState();
-        } else {
-            renderMessage("model", "API returned no content.", true);
+        const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "API returned no content.";
+        const modelMsg = { role: "model", parts: [{ text: responseText }] };
+        history.push(modelMsg);
+        renderMessage("model", responseText);
+        await addMessage(currentConversationId, "model", responseText);
+        if (currentUser) {
+            await loadConversations(currentUser.uid);
         }
     } catch (e) {
         removeLoading(loadingId);
         renderMessage("model", `Error: ${e.message}`, true);
         console.error(e);
     } finally {
-        sendButtonEl.disabled = false;
+        sendButtonEl.disabled = inputEl.value.trim() === '' || !currentUser;
         if (window.innerWidth > 768) {
             inputEl.focus();
         }
-    }
-}
-
-function persistChatState() {
-    try {
-        sessionStorage.setItem(CHAT_STATE_KEY, JSON.stringify({
-            history: history
-        }));
-    } catch (e) {
-        console.warn('Storage failed', e);
     }
 }
 
@@ -288,10 +498,14 @@ inputEl.addEventListener("keydown", (e) => {
 inputEl.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    sendButtonEl.disabled = this.value.trim() === '';
+    sendButtonEl.disabled = this.value.trim() === '' || !currentUser;
 });
 
 document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     initCopyHandler(chatBoxEl);
+    if (loginBtn) loginBtn.addEventListener('click', handleSignIn);
+    if (signupBtn) signupBtn.addEventListener('click', handleSignUp);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleSignOut);
+    if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
 });

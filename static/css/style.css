@@ -84,6 +84,17 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+.history-item.active {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.history-empty {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 .sidebar-footer {
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -100,6 +111,66 @@ body {
 
 .user-profile:hover {
     background-color: rgba(255, 255, 255, 0.05);
+}
+
+.auth-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.auth-input {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.auth-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.primary-btn,
+.ghost-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #3a82f6;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.ghost-btn {
+    background: transparent;
+    color: var(--text-primary);
+}
+
+.primary-btn:disabled,
+.ghost-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.auth-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 16px;
 }
 
 .avatar {

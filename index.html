@@ -22,8 +22,7 @@
 
   <div class="app-container">
     <aside class="sidebar">
-      <div class="new-chat-btn"
-        onclick="if(confirm('確定要清除對話紀錄並開始新對話嗎？')) { sessionStorage.removeItem('chat_state_v1'); location.reload(); }">
+      <div class="new-chat-btn" id="new-chat-btn">
         <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round"
           stroke-linejoin="round" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
           <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -31,16 +30,23 @@
         </svg>
         New chat
       </div>
-      <div class="history-list">
-        <div class="history-group">
-          <div class="history-label">Today</div>
-          <div class="history-item">Gemma AI Conversation</div>
-        </div>
+      <div class="history-list" id="conversation-list">
+        <div class="history-empty">登入後會顯示你的對話</div>
       </div>
       <div class="sidebar-footer">
-        <div class="user-profile">
-          <div class="avatar">G</div>
-          <div class="username">Guest User</div>
+        <div class="user-profile" id="user-profile">
+          <div class="avatar" id="user-avatar">G</div>
+          <div class="username" id="user-name">Guest</div>
+        </div>
+        <div class="auth-card">
+          <input id="auth-email" class="auth-input" type="email" placeholder="Email">
+          <input id="auth-password" class="auth-input" type="password" placeholder="Password">
+          <div class="auth-actions">
+            <button id="login-btn" class="primary-btn">登入</button>
+            <button id="signup-btn" class="ghost-btn">註冊</button>
+            <button id="logout-btn" class="ghost-btn">登出</button>
+          </div>
+          <div class="auth-hint" id="auth-hint">請先登入以儲存對話</div>
         </div>
       </div>
     </aside>
@@ -72,6 +78,27 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Firebase SDKs（compat 版，無需 npm） -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUsvCTTWQwZ-mWCOGCFeI0-P1fiORJmA0",
+      authDomain: "chatzssdmrofficialgithubio.firebaseapp.com",
+      projectId: "chatzssdmrofficialgithubio",
+      storageBucket: "chatzssdmrofficialgithubio.firebasestorage.app",
+      messagingSenderId: "792434430740",
+      appId: "1:792434430740:web:5648e66d63b79d72e2a801",
+      measurementId: "G-4ZVL8Z7JLS"
+    };
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.error("Firebase 初始化失敗，請確認設定是否已填寫。", e);
+    }
+  </script>
 
   <script src="static/js/SYSTEM_INSTRUCTION.js"></script>
   <script src="static/js/main.js"></script>
