@@ -21,13 +21,42 @@ const logoutBtn = document.getElementById("logout-btn");
 const authEmailEl = document.getElementById("auth-email");
 const authPasswordEl = document.getElementById("auth-password");
 const authHintEl = document.getElementById("auth-hint");
+const authHintInlineEl = document.getElementById("auth-hint-inline");
 const userNameEl = document.getElementById("user-name");
 const userAvatarEl = document.getElementById("user-avatar");
+const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+const mobileBackdrop = document.getElementById("mobile-backdrop");
+
+function setElementVisibility(el, shouldShow) {
+    if (!el) return;
+    el.style.display = shouldShow ? '' : 'none';
+}
 
 function setAuthHint(msg, isError = false) {
-    if (!authHintEl) return;
-    authHintEl.textContent = msg || '';
-    authHintEl.style.color = isError ? '#ef4444' : '#b4b4b4';
+    const text = msg || '';
+    const color = isError ? '#ef4444' : '#b4b4b4';
+    if (authHintEl) {
+        authHintEl.textContent = text;
+        authHintEl.style.color = color;
+    }
+    if (authHintInlineEl) {
+        authHintInlineEl.textContent = text;
+        authHintInlineEl.style.color = color;
+    }
+}
+
+function clearAuthFields(clearEmail = false) {
+    if (authPasswordEl) authPasswordEl.value = '';
+    if (clearEmail && authEmailEl) authEmailEl.value = '';
+}
+
+function toggleMobileSidebar(forceOpen = null) {
+    const shouldOpen = forceOpen !== null ? forceOpen : !document.body.classList.contains('sidebar-open');
+    document.body.classList.toggle('sidebar-open', shouldOpen);
+}
+
+function closeMobileSidebar() {
+    document.body.classList.remove('sidebar-open');
 }
 
 function updateUserProfile(user) {
@@ -38,6 +67,28 @@ function updateUserProfile(user) {
     } else {
         userNameEl.textContent = 'Guest';
         userAvatarEl.textContent = 'G';
+    }
+}
+
+function updateAuthUI(user) {
+    const isLoggedIn = !!user;
+    setElementVisibility(loginBtn, !isLoggedIn);
+    setElementVisibility(signupBtn, !isLoggedIn);
+    setElementVisibility(logoutBtn, isLoggedIn);
+
+    if (authEmailEl) {
+        authEmailEl.disabled = isLoggedIn;
+        authEmailEl.value = isLoggedIn ? (user?.email || '') : '';
+    }
+
+    if (authPasswordEl) {
+        authPasswordEl.disabled = isLoggedIn;
+        authPasswordEl.value = '';
+    }
+
+    if (newChatBtn) {
+        newChatBtn.classList.toggle('disabled', !isLoggedIn);
+        newChatBtn.setAttribute('aria-disabled', (!isLoggedIn).toString());
     }
 }
 
@@ -218,6 +269,7 @@ function renderConversationList(conversations) {
         item.addEventListener('click', () => {
             if (conv.id === currentConversationId) return;
             loadMessages(conv.id);
+            closeMobileSidebar();
         });
         conversationListEl.appendChild(item);
     });
@@ -277,6 +329,10 @@ async function createConversation(title = 'New chat') {
 }
 
 async function handleNewChat() {
+    if (!currentUser) {
+        setAuthHint('請先登入再建立對話', true);
+        return;
+    }
     await createConversation('New chat');
 }
 
@@ -351,6 +407,8 @@ async function handleSignIn() {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         setAuthHint('登入成功');
+        clearAuthFields();
+        closeMobileSidebar();
     } catch (e) {
         console.error(e);
         setAuthHint(e.message || '登入失敗', true);
@@ -367,6 +425,8 @@ async function handleSignUp() {
     try {
         await auth.createUserWithEmailAndPassword(email, password);
         setAuthHint('註冊並登入成功');
+        clearAuthFields();
+        closeMobileSidebar();
     } catch (e) {
         console.error(e);
         setAuthHint(e.message || '註冊失敗', true);
@@ -380,6 +440,8 @@ async function handleSignOut() {
         clearHistoryList();
         currentConversationId = null;
         setAuthHint('已登出');
+        clearAuthFields(true);
+        closeMobileSidebar();
     } catch (e) {
         console.error(e);
         setAuthHint('登出失敗', true);
@@ -389,12 +451,17 @@ async function handleSignOut() {
 auth.onAuthStateChanged(async (user) => {
     currentUser = user;
     updateUserProfile(user);
+    updateAuthUI(user);
     if (user) {
         setAuthHint(`已登入：${user.email}`);
         await loadConversations(user.uid);
         sendButtonEl.disabled = inputEl.value.trim() === '';
     } else {
         setAuthHint('請先登入以儲存對話');
+        clearChatUI();
+        clearHistoryList();
+        currentConversationId = null;
+        closeMobileSidebar();
         sendButtonEl.disabled = true;
     }
 });
@@ -502,10 +569,13 @@ inputEl.addEventListener('input', function () {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateAuthUI(currentUser);
     renderHistory();
     initCopyHandler(chatBoxEl);
     if (loginBtn) loginBtn.addEventListener('click', handleSignIn);
     if (signupBtn) signupBtn.addEventListener('click', handleSignUp);
     if (logoutBtn) logoutBtn.addEventListener('click', handleSignOut);
     if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => toggleMobileSidebar());
+    if (mobileBackdrop) mobileBackdrop.addEventListener('click', closeMobileSidebar);
 });

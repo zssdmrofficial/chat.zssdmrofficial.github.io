@@ -53,6 +53,13 @@
 
     <main class="chat-interface">
       <div class="mobile-header">
+        <button id="mobile-menu-btn" aria-label="切換選單">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
         <span>Gemma 3</span>
       </div>
 
@@ -69,12 +76,15 @@
             </svg>
           </button>
         </div>
+        <div class="auth-hint-inline" id="auth-hint-inline">請先登入以儲存對話</div>
         <div class="disclaimer">
           AI makes mistakes. Please use with caution. (Running on gemma-3-27b-it)
         </div>
       </div>
     </main>
   </div>
+
+  <div class="mobile-backdrop" id="mobile-backdrop"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
