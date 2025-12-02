@@ -9,6 +9,7 @@ const db = firebase.firestore();
 let history = [];
 let currentConversationId = null;
 let currentUser = null;
+let isCreatingConversation = false;
 
 const chatBoxEl = document.getElementById("chat-box");
 const inputEl = document.getElementById("user-input");
@@ -329,6 +330,28 @@ async function loadConversations(uid) {
     }
 }
 
+async function findUnusedNewChat(uid) {
+    if (!uid) return null;
+    try {
+        const snap = await db.collection('conversations')
+            .where('userId', '==', uid)
+            .where('title', '==', 'New chat')
+            .limit(1)
+            .get();
+
+        if (snap.empty) return null;
+
+        const doc = snap.docs[0];
+        const messagesSnap = await doc.ref.collection('messages').limit(1).get();
+        if (!messagesSnap.empty) return null;
+
+        return doc.id;
+    } catch (e) {
+        console.warn('查詢未使用的對話失敗', e);
+        return null;
+    }
+}
+
 async function createConversation(title = 'New chat') {
     const user = auth.currentUser;
     if (!user) {
@@ -336,6 +359,22 @@ async function createConversation(title = 'New chat') {
         return null;
     }
     try {
+        if (title === 'New chat') {
+            const existingDraftId = await findUnusedNewChat(user.uid);
+            if (existingDraftId) {
+                currentConversationId = existingDraftId;
+                await loadMessages(existingDraftId);
+                setAuthHint('為了厚道，有效率的壓榨資本家資源，請先使用已建立的New chat');
+                return existingDraftId;
+            }
+        }
+
+        if (isCreatingConversation) {
+            setAuthHint('正在建立對話，請稍候');
+            return currentConversationId;
+        }
+        isCreatingConversation = true;
+
         const doc = await db.collection('conversations').add({
             userId: user.uid,
             title,
@@ -350,6 +389,8 @@ async function createConversation(title = 'New chat') {
         console.error('建立對話失敗', e);
         setAuthHint('建立對話失敗，請稍後再試', true);
         return null;
+    } finally {
+        isCreatingConversation = false;
     }
 }
 
