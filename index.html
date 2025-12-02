@@ -1,3 +1,81 @@
-<html>
-  <h1>思想小助手聊天頁</h1>
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemma AI Chat</title>
+  <link rel="icon" href="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+    type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+
+<body>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="new-chat-btn"
+        onclick="if(confirm('確定要清除對話紀錄並開始新對話嗎？')) { sessionStorage.removeItem('chat_state_v1'); location.reload(); }">
+        <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round"
+          stroke-linejoin="round" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        New chat
+      </div>
+      <div class="history-list">
+        <div class="history-group">
+          <div class="history-label">Today</div>
+          <div class="history-item">Gemma AI Conversation</div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">G</div>
+          <div class="username">Guest User</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="chat-interface">
+      <div class="mobile-header">
+        <span>Gemma 3</span>
+      </div>
+
+      <div id="chat-box" class="chat-container">
+      </div>
+
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea id="user-input" placeholder="Message Gemma..." rows="1"></textarea>
+          <button id="send-button" disabled>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="disclaimer">
+          AI makes mistakes. Please use with caution. (Running on gemma-3-27b-it)
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script src="static/js/SYSTEM_INSTRUCTION.js"></script>
+  <script src="static/js/main.js"></script>
+
+</body>
+
 </html>
