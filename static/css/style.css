@@ -84,6 +84,9 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .history-item:hover {
@@ -93,6 +96,36 @@ body {
 .history-item.active {
     background-color: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.history-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.delete-conv-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.delete-conv-btn:hover {
+    color: #ef4444;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .history-empty {

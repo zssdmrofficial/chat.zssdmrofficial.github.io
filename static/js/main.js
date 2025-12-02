@@ -99,7 +99,7 @@ function clearChatUI() {
 
 function clearHistoryList() {
     if (!conversationListEl) return;
-    conversationListEl.innerHTML = '<div class="history-empty">登入後會顯示你的對話</div>';
+    conversationListEl.innerHTML = '<div class="history-empty">登入後會顯示同志你的對話</div>';
 }
 
 function escapeHtml(text) {
@@ -264,13 +264,38 @@ function renderConversationList(conversations) {
     conversations.forEach(conv => {
         const item = document.createElement('div');
         item.className = 'history-item' + (conv.id === currentConversationId ? ' active' : '');
-        item.textContent = conv.title || '未命名對話';
         item.dataset.id = conv.id;
+
+        const title = document.createElement('span');
+        title.className = 'history-title';
+        title.textContent = conv.title || '未命名對話';
+
+        const actions = document.createElement('div');
+        actions.className = 'history-actions';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'delete-conv-btn';
+        deleteBtn.title = '刪除此對話';
+        deleteBtn.innerHTML = `
+            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="14" width="14" xmlns="http://www.w3.org/2000/svg"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+        `;
+        deleteBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            deleteConversation(conv.id);
+        });
+
+        actions.appendChild(deleteBtn);
+
+        item.appendChild(title);
+        item.appendChild(actions);
+
         item.addEventListener('click', () => {
             if (conv.id === currentConversationId) return;
             loadMessages(conv.id);
             closeMobileSidebar();
         });
+
         conversationListEl.appendChild(item);
     });
 }
@@ -379,6 +404,63 @@ async function addMessage(convId, role, content) {
         });
     } catch (e) {
         console.error('寫入訊息失敗', e);
+    }
+}
+
+async function deleteConversation(convId) {
+    if (!convId) return;
+    const user = auth.currentUser;
+    if (!user) {
+        setAuthHint('請先登入再刪除對話', true);
+        return;
+    }
+
+    const confirmed = window.confirm('確定要刪除這個對話嗎？此動作無法復原。');
+    if (!confirmed) return;
+
+    try {
+        const convRef = db.collection('conversations').doc(convId);
+        const convSnap = await convRef.get();
+        const convData = convSnap.data();
+
+        if (!convSnap.exists || convData?.userId !== user.uid) {
+            setAuthHint('無法刪除此對話', true);
+            return;
+        }
+
+        const messagesSnap = await convRef.collection('messages').get();
+        const commits = [];
+        const BATCH_LIMIT = 450;
+        let batch = db.batch();
+        let counter = 0;
+
+        messagesSnap.forEach((msgDoc) => {
+            batch.delete(msgDoc.ref);
+            counter++;
+            if (counter === BATCH_LIMIT) {
+                commits.push(batch.commit());
+                batch = db.batch();
+                counter = 0;
+            }
+        });
+        if (counter > 0) {
+            commits.push(batch.commit());
+        }
+        await Promise.all(commits);
+
+        await convRef.delete();
+
+        if (currentConversationId === convId) {
+            currentConversationId = null;
+            history = [];
+            clearChatUI();
+        }
+
+        await loadConversations(user.uid);
+        setAuthHint('對話已刪除');
+    } catch (e) {
+        console.error('刪除對話失敗', e);
+        setAuthHint('刪除對話失敗，請稍後再試', true);
     }
 }
 
