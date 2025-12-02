@@ -207,8 +207,10 @@ function renderMessage(role, content, isError = false) {
         innerContent = markdownToHtml(content);
     }
 
+    const userAvatarText = (userAvatarEl?.textContent || (currentUser?.email || 'U')).trim().slice(0, 1).toUpperCase();
+
     const iconHtml = isUser
-        ? `<div class="role-icon icon-user"><svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="16" width="16" color="white" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>`
+        ? `<div class="avatar" id="user-avatar">${escapeHtml(userAvatarText)}</div>`
         : `<div class="role-icon icon-model"><svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="16" width="16" color="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M12 6v6l4 2"></path></svg></div>`;
 
     msgDiv.innerHTML = `
