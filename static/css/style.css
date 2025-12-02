@@ -1,13 +1,56 @@
 :root {
-    --bg-color: #212121;
-    --sidebar-bg: #171717;
-    --input-bg: #2f2f2f;
-    --text-primary: #ececec;
-    --text-secondary: #b4b4b4;
-    --accent-color: #f9f9f9;
-    --code-bg: #0d0d0d;
-    --border-color: #424242;
-    --user-msg-bg: #2f2f2f;
+    /* 核心配色：Liquid Glass Pink */
+    --accent-color: #ff8888;
+    --accent-strong: color-mix(in srgb, var(--accent-color) 85%, white 15%);
+    --accent-soft: color-mix(in srgb, var(--accent-color) 40%, white 10%);
+    --accent-glow: color-mix(in srgb, var(--accent-color) 35%, transparent);
+
+    /* 背景與材質 */
+    --bg-color: #050505;
+    --bg-dark-overlay: rgba(0, 0, 0, 0.55);
+    /* 深色基底 */
+    --sidebar-bg: rgba(0, 0, 0, 0.25);
+    /* 側邊欄玻璃 */
+    --input-bg: rgba(255, 255, 255, 0.05);
+    /* 輸入框玻璃 */
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.14);
+
+    /* 文字 */
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.65);
+
+    /* 功能色 */
+    --code-bg: rgba(0, 0, 0, 0.3);
+    --user-msg-bg: rgba(255, 255, 255, 0.06);
+    --border-color: var(--glass-border);
+
+    /* 圓角系統 */
+    --radius-ui: 24px;
+    --radius-sm: 12px;
+}
+
+/* 動畫定義 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 * {
@@ -17,11 +60,13 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
+    font-family: "Noto Sans TC", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    /* 模擬 full-bg 的深邃氛圍 */
+    background-color: transparent;
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
+    animation: fadeIn 1s ease-out;
 }
 
 .app-container {
@@ -29,13 +74,18 @@ body {
     height: 100%;
 }
 
+/* 側邊欄：磨砂玻璃風格 */
 .sidebar {
     width: 260px;
     background-color: var(--sidebar-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     display: flex;
     flex-direction: column;
     padding: 10px;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid var(--glass-border);
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 
 .new-chat-btn {
@@ -43,17 +93,21 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    background-color: transparent;
-    transition: background 0.2s;
+    background-color: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
     font-size: 14px;
     color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
 }
 
 .new-chat-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-soft);
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transform: translateY(-1px);
 }
 
 .new-chat-btn.disabled {
@@ -66,6 +120,7 @@ body {
     flex: 1;
     overflow-y: auto;
     margin-top: 20px;
+    /* 滾動條樣式在下方統一處理 */
 }
 
 .history-label {
@@ -73,29 +128,35 @@ body {
     color: var(--text-secondary);
     padding: 8px 12px;
     font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .history-item {
     padding: 10px 12px;
     font-size: 14px;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
 }
 
 .history-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
 }
 
 .history-item.active {
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+    border: 1px solid var(--glass-border);
+    color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .history-title {
@@ -120,23 +181,25 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s, background-color 0.15s;
+    transition: all 0.2s ease;
 }
 
 .delete-conv-btn:hover {
-    color: #ef4444;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-strong);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .history-empty {
     padding: 12px;
     font-size: 13px;
     color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
 }
 
 .sidebar-footer {
     padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--glass-border);
 }
 
 .user-profile {
@@ -144,59 +207,86 @@ body {
     align-items: center;
     gap: 10px;
     padding: 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .user-profile:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+/* 登入區塊：Liquid Glass Card 風格 */
 .auth-card {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 10px;
+    padding: 14px;
     margin-top: 8px;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
 }
 
 .auth-input {
     width: 100%;
     background: var(--input-bg);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
     color: var(--text-primary);
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 13px;
+    transition: all 0.2s ease;
 }
 
 .auth-input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: color-mix(in srgb, var(--accent-color) 40%, white 20%);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .auth-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
 }
 
 .primary-btn,
 .ghost-btn {
     flex: 1;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: #3a82f6;
-    color: #fff;
+    padding: 10px;
+    border-radius: 10px;
     font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.primary-btn {
+    border: none;
+    background: var(--accent-strong);
+    color: #1a1a1a;
+    /* 深色文字對比粉色背景 */
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.primary-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 92%, white 8%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .ghost-btn {
     background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--glass-border);
+}
+
+.ghost-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
 }
 
@@ -204,56 +294,64 @@ body {
 .ghost-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .auth-hint {
     font-size: 12px;
     color: var(--text-secondary);
     min-height: 16px;
+    text-align: center;
 }
 
 .avatar {
     width: 28px;
     height: 28px;
-    background: #5436DA;
-    border-radius: 4px;
+    background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 60%, transparent));
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     font-weight: bold;
+    color: #1a1a1a;
+    box-shadow: 0 2px 6px var(--accent-glow);
 }
 
 .username {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--accent-strong);
 }
 
+/* 聊天主界面 */
 .chat-interface {
     flex: 1;
     display: flex;
     flex-direction: column;
     position: relative;
-    background-color: var(--bg-color);
+    background-color: transparent;
 }
 
 .mobile-header {
     display: none;
     padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--glass-border);
     font-weight: 500;
     align-items: center;
     gap: 10px;
     justify-content: space-between;
     position: sticky;
     top: 0;
-    background: var(--bg-color);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
     z-index: 120;
 }
 
 .mobile-header button {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
     border-radius: 8px;
     width: 36px;
@@ -271,25 +369,43 @@ body {
     scroll-behavior: smooth;
 }
 
-.chat-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.chat-container::-webkit-scrollbar-track {
+/* 移植風格：自訂滾動條 */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
     background: transparent;
 }
 
-.chat-container::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    backdrop-filter: blur(6px);
+    transition: background-color 0.25s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    background-image: linear-gradient(180deg, var(--accent-color), transparent);
 }
 
 .message-wrapper {
     width: 100%;
     padding: 24px 0;
-    line-height: 1.6;
+    line-height: 1.7;
     font-size: 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    animation: slideInUp 0.4s ease-out backwards;
+}
+
+/* 為 AI 回覆添加極淡的背景光 */
+.message-wrapper:nth-child(even) {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0.02) 80%, transparent);
 }
 
 .message-content {
@@ -297,32 +413,37 @@ body {
     margin: 0 auto;
     padding: 0 24px;
     display: flex;
-    gap: 16px;
+    gap: 20px;
 }
 
 .role-icon {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
-    border-radius: 50%;
+    border-radius: 10px;
+    /* 方圓形 */
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .icon-user {
-    background-color: #5436DA;
+    background: var(--text-secondary);
+    color: #000;
 }
 
 .icon-model {
-    background-color: #19c37d;
-    background: linear-gradient(135deg, #4285f4, #d96570);
+    background: var(--accent-strong);
+    color: #1a1a1a;
+    box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .text-content {
     flex: 1;
     min-width: 0;
     word-wrap: break-word;
+    color: var(--text-secondary);
 }
 
 .text-content p {
@@ -338,7 +459,10 @@ body {
 .text-content h3 {
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--accent-strong);
+    /* 標題使用強調色 */
+    text-shadow: 0 0 15px var(--accent-glow);
 }
 
 .text-content ul,
@@ -349,23 +473,27 @@ body {
 
 .text-content strong {
     font-weight: 600;
-    color: #fff;
+    color: var(--text-primary);
 }
 
+/* 代碼區塊：玻璃質感 */
 .code-container {
     margin: 16px 0;
-    background: var(--code-bg);
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
     overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
 }
 
 .code-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--glass-border);
     font-size: 12px;
     color: var(--text-secondary);
     font-family: 'Inter', sans-serif;
@@ -374,57 +502,73 @@ body {
 .copy-button {
     background: transparent;
     border: none;
-    color: var(--text-secondary);
+    color: var(--accent-soft);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 12px;
+    transition: color 0.2s;
 }
 
 .copy-button:hover {
-    color: var(--text-primary);
+    color: var(--accent-strong);
 }
 
 pre {
     margin: 0;
-    padding: 12px;
+    padding: 16px;
     overflow-x: auto;
 }
 
 code {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-size: 14px;
+    color: #d4d4d4;
 }
 
 p code {
     background: rgba(255, 255, 255, 0.1);
-    padding: 2px 4px;
-    border-radius: 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
     font-size: 0.9em;
+    color: var(--accent-strong);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* 輸入框區域：懸浮玻璃艙 */
 .input-container {
     padding: 24px;
-    background-image: linear-gradient(180deg, rgba(33, 33, 33, 0), #212121 20%);
+    /* 底部漸層遮罩 */
+    background-image: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.8) 40%);
     width: 100%;
 }
 
 .input-wrapper {
     max-width: 768px;
     margin: 0 auto;
+    /* 液態玻璃核心樣式 */
     background-color: var(--input-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-radius: 26px;
     padding: 12px 16px;
     display: flex;
     align-items: flex-end;
-    gap: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: border-color 0.2s;
+    gap: 12px;
+    border: 1px solid var(--glass-highlight);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
 }
 
 .input-wrapper:focus-within {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: color-mix(in srgb, var(--accent-color) 30%, white 20%);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.3),
+        0 0 15px var(--accent-glow);
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 textarea {
@@ -444,25 +588,37 @@ textarea:focus {
     outline: none;
 }
 
+textarea::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
 button#send-button {
-    background: #fff;
-    color: #000;
+    background: var(--accent-strong);
+    color: #1a1a1a;
     border: none;
-    border-radius: 50%;
+    border-radius: 12px;
+    /* 配合按鈕風格改為圓角矩形或保持圓形 */
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     flex-shrink: 0;
+    box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+button#send-button:hover:not(:disabled) {
+    transform: scale(1.1);
+    background: #fff;
 }
 
 button#send-button:disabled {
-    background: #424242;
-    color: #212121;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.2);
     cursor: default;
+    box-shadow: none;
 }
 
 button#send-button svg {
@@ -473,8 +629,9 @@ button#send-button svg {
 .disclaimer {
     text-align: center;
     font-size: 12px;
-    color: #666;
+    color: var(--text-secondary);
     margin-top: 12px;
+    opacity: 0.6;
 }
 
 .auth-hint-inline {
@@ -494,9 +651,10 @@ button#send-button svg {
 .typing-dot {
     width: 8px;
     height: 8px;
-    background: #ccc;
+    background: var(--accent-strong);
     border-radius: 50%;
     animation: bounce 1.4s infinite ease-in-out both;
+    box-shadow: 0 0 5px var(--accent-glow);
 }
 
 .typing-dot:nth-child(1) {
@@ -513,10 +671,12 @@ button#send-button svg {
     80%,
     100% {
         transform: scale(0);
+        opacity: 0.5;
     }
 
     40% {
         transform: scale(1);
+        opacity: 1;
     }
 }
 
@@ -545,6 +705,8 @@ button#send-button svg {
 
 .shake {
     animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+    border-color: #ff4444 !important;
+    /* 錯誤狀態強調 */
 }
 
 .mobile-backdrop {
@@ -555,11 +717,15 @@ button#send-button svg {
     .sidebar {
         position: fixed;
         inset: 0 auto 0 0;
-        width: 78%;
+        width: 85%;
         max-width: 320px;
         display: none;
         z-index: 200;
-        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.35);
+        background-color: rgba(10, 10, 10, 0.9);
+        /* 手機版背景深一點以防看不清 */
+        backdrop-filter: blur(30px);
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5);
+        border-right: 1px solid var(--glass-border);
     }
 
     .mobile-header {
@@ -573,17 +739,73 @@ button#send-button svg {
 
     body.sidebar-open .sidebar {
         display: flex;
+        animation: fadeIn 0.2s ease-out;
     }
 
     .mobile-backdrop {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
         z-index: 150;
     }
 
     body.sidebar-open .mobile-backdrop {
         display: block;
+        animation: fadeIn 0.3s ease;
     }
+}
+
+.full-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 關鍵濾鏡設定 */
+    filter: brightness(60%) grayscale(18%) blur(2px);
+    transform: scale(1.03);
+}
+
+.full-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 40%),
+        var(--bg-dark-overlay);
+    /* 這是黑色 55% 透明度 */
+    z-index: -1;
+}
+
+/* 這是漏掉的容器設定 */
+.full-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    /* 確保它在最底層 */
+    overflow: hidden;
+}
+
+/* 你原本貼的 img 設定 (保持不變) */
+.full-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(60%) grayscale(18%) blur(2px);
+    transform: scale(1.03);
+}
+
+/* 你原本貼的 overlay 設定 (保持不變) */
+.full-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* 這裡用到的 var(--bg-dark-overlay) 需要在 :root 定義 */
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 40%),
+        var(--bg-dark-overlay);
+    z-index: -1;
 }
