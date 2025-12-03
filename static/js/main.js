@@ -584,12 +584,11 @@ auth.onAuthStateChanged(async (user) => {
         await loadConversations(user.uid);
         sendButtonEl.disabled = inputEl.value.trim() === '';
     } else {
-        setAuthHint('請先登入以儲存對話');
-        clearChatUI();
+        setAuthHint('未登入：對話不會被儲存');
         clearHistoryList();
         currentConversationId = null;
         closeMobileSidebar();
-        sendButtonEl.disabled = true;
+        sendButtonEl.disabled = inputEl.value.trim() === '';
     }
 });
 
@@ -628,12 +627,7 @@ async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text) return;
 
-    if (!currentUser) {
-        setAuthHint('請先登入後再發送訊息', true);
-        return;
-    }
-
-    if (!currentConversationId) {
+    if (currentUser && !currentConversationId) {
         const newId = await createConversation('New chat');
         if (!newId) return;
     }
@@ -649,8 +643,10 @@ async function sendMessage() {
     const loadingId = showLoading();
 
     try {
-        await addMessage(currentConversationId, "user", text);
-        await updateConversationTitleIfEmpty(currentConversationId, text);
+        if (currentUser && currentConversationId) {
+            await addMessage(currentConversationId, "user", text);
+            await updateConversationTitleIfEmpty(currentConversationId, text);
+        }
 
         const payloadHistory = [
             { role: "user", parts: [{ text: SYSTEM_INSTRUCTION }] },
@@ -664,8 +660,8 @@ async function sendMessage() {
         const modelMsg = { role: "model", parts: [{ text: responseText }] };
         history.push(modelMsg);
         renderMessage("model", responseText);
-        await addMessage(currentConversationId, "model", responseText);
-        if (currentUser) {
+        if (currentUser && currentConversationId) {
+            await addMessage(currentConversationId, "model", responseText);
             await loadConversations(currentUser.uid);
         }
     } catch (e) {
@@ -673,7 +669,7 @@ async function sendMessage() {
         renderMessage("model", `Error: ${e.message}`, true);
         console.error(e);
     } finally {
-        sendButtonEl.disabled = inputEl.value.trim() === '' || !currentUser;
+        sendButtonEl.disabled = inputEl.value.trim() === '';
         if (window.innerWidth > 768) {
             inputEl.focus();
         }
@@ -692,7 +688,7 @@ inputEl.addEventListener("keydown", (e) => {
 inputEl.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    sendButtonEl.disabled = this.value.trim() === '' || !currentUser;
+    sendButtonEl.disabled = this.value.trim() === '';
 });
 
 document.addEventListener('DOMContentLoaded', () => {
