@@ -629,8 +629,7 @@ button#send-button {
     background: var(--accent-strong);
     color: #1a1a1a;
     border: none;
-    border-radius: 12px;
-    /* 配合按鈕風格改為圓角矩形或保持圓形 */
+    border-radius: 50%;
     width: 32px;
     height: 32px;
     display: flex;

@@ -10,6 +10,7 @@ let history = [];
 let currentConversationId = null;
 let currentUser = null;
 let isCreatingConversation = false;
+let isAwaitingResponse = false;
 
 const chatBoxEl = document.getElementById("chat-box");
 const inputEl = document.getElementById("user-input");
@@ -28,9 +29,32 @@ const userAvatarEl = document.getElementById("user-avatar");
 const mobileMenuBtn = document.getElementById("mobile-menu-btn");
 const mobileBackdrop = document.getElementById("mobile-backdrop");
 
+const SEND_ICON_DEFAULT = `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+`;
+
+const SEND_ICON_PENDING = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon">
+        <path d="M4.5 5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H14.25C14.9404 4.5 15.5 5.05964 15.5 5.75V14.25C15.5 14.9404 14.9404 15.5 14.25 15.5H5.75C5.05964 15.5 4.5 14.9404 4.5 14.25V5.75Z"></path>
+    </svg>
+`;
+
 function setElementVisibility(el, shouldShow) {
     if (!el) return;
     el.style.display = shouldShow ? '' : 'none';
+}
+
+function updateSendButtonState() {
+    if (!sendButtonEl || !inputEl) return;
+    const hasText = inputEl.value.trim() !== '';
+    sendButtonEl.disabled = isAwaitingResponse || !hasText;
+    sendButtonEl.setAttribute('aria-busy', isAwaitingResponse.toString());
+    const iconMarkup = isAwaitingResponse ? SEND_ICON_PENDING : SEND_ICON_DEFAULT;
+    if (sendButtonEl.innerHTML.trim() !== iconMarkup.trim()) {
+        sendButtonEl.innerHTML = iconMarkup;
+    }
 }
 
 function setAuthHint(msg, isError = false) {
@@ -577,13 +601,13 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         setAuthHint(`已登入：${user.email}`);
         await loadConversations(user.uid);
-        sendButtonEl.disabled = inputEl.value.trim() === '';
+        updateSendButtonState();
     } else {
         setAuthHint('未登入：對話不會被儲存');
         clearHistoryList();
         currentConversationId = null;
         closeMobileSidebar();
-        sendButtonEl.disabled = inputEl.value.trim() === '';
+        updateSendButtonState();
     }
 });
 
@@ -686,6 +710,9 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
 }
 
 async function sendMessage() {
+    if (isAwaitingResponse) {
+        return;
+    }
     const text = inputEl.value.trim();
     if (!text) return;
 
@@ -694,9 +721,10 @@ async function sendMessage() {
         if (!newId) return;
     }
 
+    isAwaitingResponse = true;
     inputEl.value = "";
     inputEl.style.height = 'auto';
-    sendButtonEl.disabled = true;
+    updateSendButtonState();
 
     const userMsg = { role: "user", parts: [{ text }] };
     history.push(userMsg);
@@ -731,7 +759,8 @@ async function sendMessage() {
         renderMessage("model", `Error: ${e.message}`, true);
         console.error(e);
     } finally {
-        sendButtonEl.disabled = inputEl.value.trim() === '';
+        isAwaitingResponse = false;
+        updateSendButtonState();
         if (window.innerWidth > 768) {
             inputEl.focus();
         }
@@ -750,7 +779,7 @@ inputEl.addEventListener("keydown", (e) => {
 inputEl.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
-    sendButtonEl.disabled = this.value.trim() === '';
+    updateSendButtonState();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -763,4 +792,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => toggleMobileSidebar());
     if (mobileBackdrop) mobileBackdrop.addEventListener('click', closeMobileSidebar);
+    updateSendButtonState();
 });
