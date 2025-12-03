@@ -587,10 +587,47 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-async function callApiWithRetry(body, maxRetries = 2) {
+// [新增] 顯示冷卻倒數的函式
+async function showCooldownCountdown(seconds, loadingId) {
+    return new Promise((resolve) => {
+        let remaining = seconds;
+        const loadingEl = document.getElementById(loadingId);
+        // 找到文字容器，原本裡面是 typing-indicator
+        const contentEl = loadingEl?.querySelector('.text-content');
+
+        // 備份原始 Loading 動畫 (typing dots)
+        const originalHtml = contentEl ? contentEl.innerHTML : '';
+
+        console.log(`[COOLDOWN] 進入冷卻，總共 ${seconds} 秒`);
+
+        const timer = setInterval(() => {
+            if (contentEl) {
+                // 更新 UI 顯示倒數
+                contentEl.innerHTML = `<i>思想小助手回應中... (等待 ${remaining} 秒冷卻)</i>`;
+            }
+            console.log(`[COOLDOWN] 剩餘 ${remaining} 秒`);
+            remaining--;
+
+            if (remaining <= 0) {
+                clearInterval(timer);
+                if (contentEl) {
+                    // 冷卻結束，恢復原本的打字動畫，準備重試
+                    contentEl.innerHTML = originalHtml;
+                }
+                console.log(`[COOLDOWN] 冷卻結束，準備重試 API`);
+                resolve();
+            }
+        }, 1000);
+    });
+}
+
+// [修改] 強化版 API 呼叫 (包含 429/503 處理與 UI 連動)
+async function callApiWithRetry(body, loadingId, maxRetries = 5) {
     let attempt = 0;
-    while (attempt <= maxRetries) {
+    while (attempt < maxRetries) {
         attempt++;
+        console.log(`[API] 嘗試第 ${attempt} 次呼叫...`);
+
         try {
             const res = await fetch(API_URL, {
                 method: "POST",
@@ -598,24 +635,54 @@ async function callApiWithRetry(body, maxRetries = 2) {
                 body: JSON.stringify(body),
             });
 
+            // 處理 503 (服務超載) -> 立即重試
+            if (res.status === 503) {
+                console.warn(`[API] 503 超載，第 ${attempt} 次 → 立即重試`);
+                continue;
+            }
+
+            // 處理 429 (請求過多) -> 進入倒數冷卻
             if (res.status === 429) {
-                console.warn(`[API] 429 Too Many Requests. Retrying...`);
-                await new Promise(r => setTimeout(r, 2000 * attempt));
+                let retryAfter = parseInt(res.headers.get("Retry-After") || "0", 10);
+
+                // 如果 Header 沒給時間，嘗試從錯誤訊息解析 (Gemini 常見錯誤格式)
+                if (!retryAfter) {
+                    const errData = await res.json().catch(() => ({}));
+                    const msg = errData?.error?.message || "";
+                    // 尋找類似 "retry in 12s" 的字串
+                    const match = msg.match(/retry in ([\d.]+)s/i);
+                    if (match) retryAfter = Math.ceil(parseFloat(match[1]));
+                }
+
+                // 如果都找不到，預設等待 5 秒 (隨著次數增加)
+                if (!retryAfter) retryAfter = 5 * attempt;
+
+                console.warn(`[API] 429 配額超限 → 等待 ${retryAfter} 秒再重試 (第 ${attempt} 次)`);
+
+                // 呼叫 UI 倒數，傳入 loadingId 以便更新畫面
+                await showCooldownCountdown(retryAfter, loadingId);
+
                 continue;
             }
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
+                console.error(`[API] 非 503/429 錯誤: ${res.status}`, err);
                 throw new Error(err?.error?.message || `HTTP ${res.status}`);
             }
 
+            console.log(`[API] 成功! 第 ${attempt} 次呼叫返回結果`);
             return await res.json();
+
         } catch (e) {
-            if (attempt > maxRetries) throw e;
-            console.warn(`[API] Retry ${attempt} failed:`, e);
-            await new Promise(r => setTimeout(r, 1000 * attempt));
+            console.error(`[API] 呼叫失敗 (第 ${attempt} 次):`, e);
+            // 如果是最後一次嘗試仍然失敗，則拋出錯誤
+            if (attempt >= maxRetries) throw e;
+            // 發生網路錯誤等非 API 狀態碼錯誤時，稍作等待再重試
+            await new Promise(r => setTimeout(r, 2000));
         }
     }
+    throw new Error("已達最大重試次數仍失敗");
 }
 
 async function sendMessage() {
@@ -648,7 +715,7 @@ async function sendMessage() {
             ...history
         ];
 
-        const data = await callApiWithRetry({ contents: payloadHistory });
+        const data = await callApiWithRetry({ contents: payloadHistory }, loadingId);
         removeLoading(loadingId);
 
         const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "API returned no content.";
