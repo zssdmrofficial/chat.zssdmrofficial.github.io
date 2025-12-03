@@ -13,11 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap"
     rel="stylesheet">
 
-  <!-- 移除舊的 style.css 連結，因為樣式已整合在下方 -->
-  <!-- <link rel="stylesheet" href="static/css/style.css"> -->
-
   <style>
-    /* === 移植自參考設計的核心變數 === */
     :root {
       --accent-color: #ff8888;
       --accent-strong: color-mix(in srgb, var(--accent-color) 85%, white 15%);
@@ -30,7 +26,6 @@
       --input-bg: rgba(255, 255, 255, 0.06);
     }
 
-    /* === 動畫定義 === */
     @keyframes fadeInScale {
       from {
         opacity: 0;
@@ -53,7 +48,6 @@
       }
     }
 
-    /* === 全局樣式 === */
     * {
       box-sizing: border-box;
     }
@@ -68,11 +62,9 @@
       font-family: "Noto Sans TC", "Inter", system-ui, sans-serif;
       color: var(--text-primary);
       overflow: hidden;
-      /* 防止背景溢出 */
       animation: fadeIn 0.8s ease-out;
     }
 
-    /* === 背景處理 === */
     .full-bg {
       position: fixed;
       top: 0;
@@ -86,7 +78,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      /* 參考風格的濾鏡效果 */
       filter: brightness(60%) grayscale(18%) blur(4px);
       transform: scale(1.03);
     }
@@ -101,29 +92,21 @@
       z-index: -1;
     }
 
-    /* === 登入卡片容器 (Glassmorphism) === */
     .login-shell {
       width: 100%;
       max-width: 420px;
       padding: 40px 32px;
       position: relative;
       z-index: 10;
-
-      /* 毛玻璃核心 */
       background: rgba(255, 255, 255, 0.07);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-
       border-radius: var(--radius-ui);
-      /* 動態邊框色 */
       border: 1px solid color-mix(in srgb, var(--accent-color) 28%, white 15%);
-      /* 強調色陰影 */
       box-shadow: 0 18px 60px color-mix(in srgb, var(--accent-color) 15%, black 20%);
-
       animation: fadeInScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* === 文字樣式 === */
     .login-title {
       font-size: 26px;
       font-weight: 800;
@@ -141,7 +124,6 @@
       line-height: 1.6;
     }
 
-    /* === 輸入框樣式 === */
     .auth-input {
       width: 100%;
       padding: 12px 16px;
@@ -166,7 +148,6 @@
       box-shadow: 0 0 15px var(--accent-glow);
     }
 
-    /* === 按鈕區域 === */
     .login-actions {
       display: flex;
       gap: 12px;
@@ -197,7 +178,6 @@
       transform: scale(0.98);
     }
 
-    /* === 連結樣式 === */
     .back-link {
       color: var(--text-secondary);
       text-decoration: none;
@@ -214,7 +194,6 @@
       color: #fff;
     }
 
-    /* === 狀態文字 === */
     .status-text {
       min-height: 20px;
       font-size: 13px;
@@ -228,7 +207,6 @@
 </head>
 
 <body>
-  <!-- 背景圖片容器 -->
   <div class="full-bg"><img src="/static/images/background.png" alt="Background"></div>
 
   <div class="login-shell">

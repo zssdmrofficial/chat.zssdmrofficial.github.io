@@ -1,36 +1,23 @@
 :root {
-    /* 核心配色：Liquid Glass Pink */
     --accent-color: #ff8888;
     --accent-strong: color-mix(in srgb, var(--accent-color) 85%, white 15%);
     --accent-soft: color-mix(in srgb, var(--accent-color) 40%, white 10%);
     --accent-glow: color-mix(in srgb, var(--accent-color) 35%, transparent);
-
-    /* 背景與材質 */
     --bg-color: #050505;
     --bg-dark-overlay: rgba(0, 0, 0, 0.55);
-    /* 深色基底 */
     --sidebar-bg: rgba(0, 0, 0, 0.25);
-    /* 側邊欄玻璃 */
     --input-bg: rgba(255, 255, 255, 0.05);
-    /* 輸入框玻璃 */
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-highlight: rgba(255, 255, 255, 0.14);
-
-    /* 文字 */
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.65);
-
-    /* 功能色 */
     --code-bg: rgba(0, 0, 0, 0.3);
     --user-msg-bg: rgba(255, 255, 255, 0.06);
     --border-color: var(--glass-border);
-
-    /* 圓角系統 */
     --radius-ui: 24px;
     --radius-sm: 12px;
 }
 
-/* 動畫定義 */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -61,7 +48,6 @@
 
 body {
     font-family: "Noto Sans TC", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    /* 模擬 full-bg 的深邃氛圍 */
     background-color: transparent;
     color: var(--text-primary);
     height: 100vh;
@@ -74,7 +60,6 @@ body {
     height: 100%;
 }
 
-/* 側邊欄：磨砂玻璃風格 */
 .sidebar {
     width: 260px;
     background-color: var(--sidebar-bg);
@@ -120,7 +105,6 @@ body {
     flex: 1;
     overflow-y: auto;
     margin-top: 20px;
-    /* 滾動條樣式在下方統一處理 */
 }
 
 .history-label {
@@ -216,7 +200,6 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 登入區塊：Liquid Glass Card 風格 */
 .auth-card {
     display: flex;
     flex-direction: column;
@@ -269,7 +252,6 @@ body {
     border: none;
     background: var(--accent-strong);
     color: #1a1a1a;
-    /* 深色文字對比粉色背景 */
     box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
 
@@ -325,7 +307,6 @@ body {
     color: var(--accent-strong);
 }
 
-/* 聊天主界面 */
 .chat-interface {
     flex: 1;
     display: flex;
@@ -344,7 +325,6 @@ body {
     justify-content: space-between;
     position: sticky;
     top: 0;
-    /* 與 history-list 同調的玻璃色調 */
     background-color: var(--sidebar-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -371,7 +351,6 @@ body {
     padding: 24px 0;
     scroll-behavior: smooth;
 }
-
 
 ::-webkit-scrollbar {
     width: 10px;
@@ -401,7 +380,6 @@ body {
     transform: scaleX(1.15);
 }
 
-
 .message-wrapper {
     width: 100%;
     padding: 24px 0;
@@ -411,7 +389,6 @@ body {
     animation: slideInUp 0.4s ease-out backwards;
 }
 
-/* 為 AI 回覆添加極淡的背景光 */
 .message-wrapper:nth-child(even) {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0.02) 80%, transparent);
 }
@@ -501,7 +478,6 @@ body {
     height: 32px;
     flex-shrink: 0;
     border-radius: 10px;
-    /* 方圓形 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -541,7 +517,6 @@ body {
     margin-bottom: 0.5rem;
     font-weight: 700;
     color: var(--accent-strong);
-    /* 標題使用強調色 */
     text-shadow: 0 0 15px var(--accent-glow);
 }
 
@@ -556,7 +531,6 @@ body {
     color: var(--text-primary);
 }
 
-/* 代碼區塊：玻璃質感 */
 .code-container {
     margin: 16px 0;
     background: rgba(0, 0, 0, 0.4);
@@ -616,43 +590,30 @@ p code {
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* 輸入框區域：懸浮玻璃艙 */
 .input-container {
     position: relative;
     padding: 24px;
     width: 100%;
     z-index: 0;
-    /* 前景 */
     overflow: hidden;
-    /* 防止blur外溢 */
 }
 
-/* 背景層 */
 .input-container::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
-    /* 在所有內容後面 */
-
     background-image: url('/static/images/background.png');
     background-size: cover;
     background-position: center;
-
-    /* 套你要的濾鏡 */
     filter: brightness(60%) grayscale(18%) blur(2px);
-
-    /* 你的底部漸層遮罩效果（換成 mask-image 版本） */
     -webkit-mask-image: linear-gradient(180deg, transparent, black 40%);
     mask-image: linear-gradient(180deg, transparent, black 40%);
 }
 
-
-
 .input-wrapper {
     max-width: 768px;
     margin: 0 auto;
-    /* 液態玻璃核心樣式 */
     background-color: var(--input-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -802,7 +763,6 @@ button#send-button svg {
 .shake {
     animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
     border-color: #ff4444 !important;
-    /* 錯誤狀態強調 */
 }
 
 .mobile-backdrop {
@@ -817,7 +777,6 @@ button#send-button svg {
         max-width: 320px;
         display: none;
         z-index: 200;
-        /* 與 mobile-header 同調的玻璃色調 */
         background-color: var(--sidebar-bg);
         backdrop-filter: blur(20px) saturate(180%);
         -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -864,7 +823,6 @@ button#send-button svg {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* 關鍵濾鏡設定 */
     filter: brightness(60%) grayscale(18%) blur(2px);
     transform: scale(1.03);
 }
@@ -876,11 +834,9 @@ button#send-button svg {
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 40%),
         var(--bg-dark-overlay);
-    /* 這是黑色 55% 透明度 */
     z-index: -1;
 }
 
-/* 這是漏掉的容器設定 */
 .full-bg {
     position: fixed;
     top: 0;
@@ -888,11 +844,9 @@ button#send-button svg {
     width: 100%;
     height: 100%;
     z-index: -2;
-    /* 確保它在最底層 */
     overflow: hidden;
 }
 
-/* 你原本貼的 img 設定 (保持不變) */
 .full-bg img {
     width: 100%;
     height: 100%;
@@ -901,12 +855,10 @@ button#send-button svg {
     transform: scale(1.03);
 }
 
-/* 你原本貼的 overlay 設定 (保持不變) */
 .full-bg::after {
     content: '';
     position: absolute;
     inset: 0;
-    /* 這裡用到的 var(--bg-dark-overlay) 需要在 :root 定義 */
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 8%, transparent), transparent 40%),
         var(--bg-dark-overlay);

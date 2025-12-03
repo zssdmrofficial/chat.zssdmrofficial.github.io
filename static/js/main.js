@@ -2,7 +2,6 @@ const API_KEY = "AIzaSyDo6isc-iR_Sv0XIznh4Tx7b8sn9pfKa6I";
 const MODEL = "gemma-3-27b-it";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
-// Firebase 來自 index.html 的初始化
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -696,22 +695,17 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// [新增] 顯示冷卻倒數的函式
 async function showCooldownCountdown(seconds, loadingId) {
     return new Promise((resolve) => {
         let remaining = seconds;
         const loadingEl = document.getElementById(loadingId);
-        // 找到文字容器，原本裡面是 typing-indicator
         const contentEl = loadingEl?.querySelector('.text-content');
-
-        // 備份原始 Loading 動畫 (typing dots)
         const originalHtml = contentEl ? contentEl.innerHTML : '';
 
         console.log(`[COOLDOWN] 進入冷卻，總共 ${seconds} 秒`);
 
         const timer = setInterval(() => {
             if (contentEl) {
-                // 更新 UI 顯示倒數
                 contentEl.innerHTML = `<i>思想小助手回應中... (等待 ${remaining} 秒冷卻)</i>`;
             }
             console.log(`[COOLDOWN] 剩餘 ${remaining} 秒`);
@@ -720,7 +714,6 @@ async function showCooldownCountdown(seconds, loadingId) {
             if (remaining <= 0) {
                 clearInterval(timer);
                 if (contentEl) {
-                    // 冷卻結束，恢復原本的打字動畫，準備重試
                     contentEl.innerHTML = originalHtml;
                 }
                 console.log(`[COOLDOWN] 冷卻結束，準備重試 API`);
@@ -730,7 +723,6 @@ async function showCooldownCountdown(seconds, loadingId) {
     });
 }
 
-// [修改] 強化版 API 呼叫 (包含 429/503 處理與 UI 連動)
 async function callApiWithRetry(body, loadingId, maxRetries = 5) {
     let attempt = 0;
     while (attempt < maxRetries) {
@@ -744,31 +736,25 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
                 body: JSON.stringify(body),
             });
 
-            // 處理 503 (服務超載) -> 立即重試
             if (res.status === 503) {
                 console.warn(`[API] 503 超載，第 ${attempt} 次 → 立即重試`);
                 continue;
             }
 
-            // 處理 429 (請求過多) -> 進入倒數冷卻
             if (res.status === 429) {
                 let retryAfter = parseInt(res.headers.get("Retry-After") || "0", 10);
 
-                // 如果 Header 沒給時間，嘗試從錯誤訊息解析 (Gemini 常見錯誤格式)
                 if (!retryAfter) {
                     const errData = await res.json().catch(() => ({}));
                     const msg = errData?.error?.message || "";
-                    // 尋找類似 "retry in 12s" 的字串
                     const match = msg.match(/retry in ([\d.]+)s/i);
                     if (match) retryAfter = Math.ceil(parseFloat(match[1]));
                 }
 
-                // 如果都找不到，預設等待 5 秒 (隨著次數增加)
                 if (!retryAfter) retryAfter = 5 * attempt;
 
                 console.warn(`[API] 429 配額超限 → 等待 ${retryAfter} 秒再重試 (第 ${attempt} 次)`);
 
-                // 呼叫 UI 倒數，傳入 loadingId 以便更新畫面
                 await showCooldownCountdown(retryAfter, loadingId);
 
                 continue;
@@ -785,9 +771,7 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
 
         } catch (e) {
             console.error(`[API] 呼叫失敗 (第 ${attempt} 次):`, e);
-            // 如果是最後一次嘗試仍然失敗，則拋出錯誤
             if (attempt >= maxRetries) throw e;
-            // 發生網路錯誤等非 API 狀態碼錯誤時，稍作等待再重試
             await new Promise(r => setTimeout(r, 2000));
         }
     }
