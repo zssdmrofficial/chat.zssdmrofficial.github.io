@@ -424,6 +424,78 @@ body {
     gap: 20px;
 }
 
+.message-footer {
+    max-width: 768px;
+    margin: 8px auto 0;
+    padding: 0 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.copy-message-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 12px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    opacity: 0;
+}
+
+.message-wrapper:hover .copy-message-btn,
+.message-wrapper:focus-within .copy-message-btn,
+.copy-message-btn:focus-visible {
+    opacity: 1;
+}
+
+.copy-message-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.copy-message-btn.copy-error {
+    color: #ef4444;
+}
+
+.copy-button-inner {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.copy-button-inner svg {
+    width: 20px;
+    height: 20px;
+}
+
+.copy-button-inner .copy-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+.copy-message-btn:not(.copy-success) .copy-icon-default {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.copy-message-btn.copy-success .copy-icon-success {
+    opacity: 1;
+    transform: scale(1);
+}
+
 .role-icon {
     width: 32px;
     height: 32px;
@@ -758,6 +830,7 @@ button#send-button svg {
     }
 
     .message-content,
+    .message-footer,
     .input-wrapper {
         padding: 0 16px;
     }
