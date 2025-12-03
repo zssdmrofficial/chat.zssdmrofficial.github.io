@@ -763,6 +763,11 @@ button#send-button svg {
         padding: 0 16px;
     }
 
+    .input-wrapper {
+        padding: 9px 16px;
+        min-height: 36px;
+    }
+
     body.sidebar-open .sidebar {
         display: flex;
         animation: fadeIn 0.2s ease-out;
@@ -772,8 +777,8 @@ button#send-button svg {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(5px);
+        background: transparent;
+        backdrop-filter: none;
         z-index: 150;
     }
 
