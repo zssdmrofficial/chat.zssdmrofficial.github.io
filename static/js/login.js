@@ -35,7 +35,7 @@ async function handleAuth() {
       window.location.href = 'index.html';
     } catch (loginError) {
       console.error('Login failed.', loginError);
-      setStatus('電子郵件oremail錯誤', true);
+      setStatus('電子郵件或密碼錯誤', true);
     }
   } finally {
     submitBtn.disabled = false;
