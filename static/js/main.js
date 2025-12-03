@@ -23,7 +23,6 @@ const logoutBtn = document.getElementById("logout-btn");
 const authEmailEl = document.getElementById("auth-email");
 const authPasswordEl = document.getElementById("auth-password");
 const authHintEl = document.getElementById("auth-hint");
-const authHintInlineEl = document.getElementById("auth-hint-inline");
 const userNameEl = document.getElementById("user-name");
 const userAvatarEl = document.getElementById("user-avatar");
 const mobileMenuBtn = document.getElementById("mobile-menu-btn");
@@ -40,10 +39,6 @@ function setAuthHint(msg, isError = false) {
     if (authHintEl) {
         authHintEl.textContent = text;
         authHintEl.style.color = color;
-    }
-    if (authHintInlineEl) {
-        authHintInlineEl.textContent = text;
-        authHintInlineEl.style.color = color;
     }
 }
 

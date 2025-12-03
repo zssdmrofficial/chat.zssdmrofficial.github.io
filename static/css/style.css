@@ -667,14 +667,6 @@ button#send-button svg {
     opacity: 0.6;
 }
 
-.auth-hint-inline {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    min-height: 16px;
-}
-
 .typing-indicator {
     display: flex;
     gap: 4px;
