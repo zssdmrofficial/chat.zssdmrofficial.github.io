@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入 - 張師社會主義民主共和國</title>
+  <link rel="icon" href="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+    type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/style.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #0b1021;
+    }
+
+    .login-shell {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px;
+      background: rgba(18, 23, 43, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+    }
+
+    .login-subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .login-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      align-items: center;
+    }
+
+    .back-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link:hover {
+      color: #e2e8f0;
+    }
+
+    .status-text {
+      min-height: 18px;
+      font-size: 13px;
+      color: #b4b4b4;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-shell">
+    <div class="login-title">同志請登入 / 註冊</div>
+    <div class="login-subtitle">使用同一組帳密，系統會自動判斷是否為新用戶。</div>
+
+    <input id="login-email" class="auth-input" type="email" placeholder="Email">
+    <input id="login-password" class="auth-input" type="password" placeholder="Password">
+
+    <div class="login-actions">
+      <button id="login-submit" class="primary-btn" style="flex: 1;">登入/註冊</button>
+      <a class="back-link" href="index.html">回到聊天</a>
+    </div>
+    <div id="login-status" class="status-text"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUsvCTTWQwZ-mWCOGCFeI0-P1fiORJmA0",
+      authDomain: "chatzssdmrofficialgithubio.firebaseapp.com",
+      projectId: "chatzssdmrofficialgithubio",
+      storageBucket: "chatzssdmrofficialgithubio.firebasestorage.app",
+      messagingSenderId: "792434430740",
+      appId: "1:792434430740:web:5648e66d63b79d72e2a801",
+      measurementId: "G-4ZVL8Z7JLS"
+    };
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.error("Firebase 初始化失敗，請確認設定是否已填寫。", e);
+    }
+  </script>
+  <script src="static/js/login.js"></script>
+</body>
+
+</html>

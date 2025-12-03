@@ -18,6 +18,7 @@ const conversationListEl = document.getElementById("conversation-list");
 const newChatBtn = document.getElementById("new-chat-btn");
 const loginBtn = document.getElementById("login-btn");
 const signupBtn = document.getElementById("signup-btn");
+const loginPageBtn = document.getElementById("login-page-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const authEmailEl = document.getElementById("auth-email");
 const authPasswordEl = document.getElementById("auth-password");
@@ -75,6 +76,7 @@ function updateAuthUI(user) {
     const isLoggedIn = !!user;
     setElementVisibility(loginBtn, !isLoggedIn);
     setElementVisibility(signupBtn, !isLoggedIn);
+    setElementVisibility(loginPageBtn, !isLoggedIn);
     setElementVisibility(logoutBtn, isLoggedIn);
 
     if (authEmailEl) {
