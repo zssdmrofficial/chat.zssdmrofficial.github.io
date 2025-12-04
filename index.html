@@ -64,13 +64,18 @@
 
       <div class="input-container">
         <div class="input-wrapper">
-          <textarea id="user-input" placeholder="跟思想小助手聊聊..." rows="1"></textarea>
-          <button id="send-button" disabled>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </button>
+          <div class="input-main">
+            <textarea id="user-input" placeholder="跟思想小助手聊聊..." rows="1"></textarea>
+            <button id="send-button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <div class="prompt-tools-block" id="prompt-tools-block">
+            <div class="prompt-tools-list" id="prompt-tools"></div>
+          </div>
         </div>
         <div class="disclaimer">
           AI makes mistakes. Please use with caution.
@@ -104,6 +109,7 @@
     }
   </script>
 
+  <script src="static/js/crimson-universe.js"></script>
   <script src="static/js/SYSTEM_INSTRUCTION.js"></script>
   <script src="static/js/main.js"></script>
 
