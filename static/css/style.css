@@ -145,7 +145,6 @@ body {
 }
 
 .message-action-btn:disabled {
-    opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
 }
@@ -442,6 +441,12 @@ body {
 .message-wrapper:focus-within .message-action-btn,
 .message-action-btn:focus-visible {
     opacity: 1;
+}
+
+.message-wrapper:hover .message-action-btn:disabled,
+.message-wrapper:focus-within .message-action-btn:disabled,
+.message-action-btn:disabled:focus-visible {
+    opacity: 0.5;
 }
 
 .message-action-btn:hover {
