@@ -20,6 +20,7 @@ let currentConversationId = null;
 let currentUser = null;
 let isCreatingConversation = false;
 let isAwaitingResponse = false;
+let isEditingMessage = false;
 
 const chatBoxEl = document.getElementById("chat-box");
 const inputEl = document.getElementById("user-input");
@@ -204,6 +205,73 @@ function updateSendButtonState() {
     }
 }
 
+function isConversationActionLocked() {
+    return isAwaitingResponse || isEditingMessage;
+}
+
+function getConversationLockMessage(actionLabel = '操作') {
+    if (isAwaitingResponse) {
+        return `模型回應中，暫時無法${actionLabel}`;
+    }
+    if (isEditingMessage) {
+        return `編輯訊息期間，暫時無法${actionLabel}`;
+    }
+    return '';
+}
+
+function notifyConversationActionLocked(actionLabel) {
+    const msg = getConversationLockMessage(actionLabel);
+    if (msg) {
+        setAuthHint(msg, true);
+    }
+}
+
+function updateNewChatButtonState() {
+    if (!newChatBtn) return;
+    const disabled = !currentUser || isConversationActionLocked();
+    newChatBtn.classList.toggle('disabled', disabled);
+    newChatBtn.setAttribute('aria-disabled', disabled.toString());
+    if (disabled) {
+        newChatBtn.setAttribute('disabled', 'true');
+    } else {
+        newChatBtn.removeAttribute('disabled');
+    }
+}
+
+function updateConversationItemsState() {
+    if (!conversationListEl) return;
+    const locked = isConversationActionLocked();
+    const items = conversationListEl.querySelectorAll('.history-item');
+    items.forEach((item) => {
+        item.classList.toggle('disabled', locked);
+        item.setAttribute('aria-disabled', locked.toString());
+    });
+}
+
+function updateEditButtonsState() {
+    const shouldDisable = isAwaitingResponse;
+    const editButtons = document.querySelectorAll('.edit-message-btn');
+    editButtons.forEach((btn) => {
+        if (!btn) return;
+        btn.disabled = shouldDisable;
+        btn.setAttribute('aria-disabled', shouldDisable.toString());
+        btn.classList.toggle('disabled', shouldDisable);
+    });
+}
+
+function updateConversationLockUI() {
+    updateNewChatButtonState();
+    updateConversationItemsState();
+    updateEditButtonsState();
+}
+
+function setEditingState(isEditing) {
+    const nextState = !!isEditing;
+    if (isEditingMessage === nextState) return;
+    isEditingMessage = nextState;
+    updateConversationLockUI();
+}
+
 function setAuthHint(msg, isError = false) {
     const text = msg || '';
     const color = isError ? '#ef4444' : '#b4b4b4';
@@ -254,11 +322,7 @@ function updateAuthUI(user) {
         authPasswordEl.disabled = isLoggedIn;
         authPasswordEl.value = '';
     }
-
-    if (newChatBtn) {
-        newChatBtn.classList.toggle('disabled', !isLoggedIn);
-        newChatBtn.setAttribute('aria-disabled', (!isLoggedIn).toString());
-    }
+    updateNewChatButtonState();
 }
 
 function clearChatUI() {
@@ -429,6 +493,9 @@ function initCopyHandler(element) {
 
         const editBtn = ev.target.closest('.edit-message-btn');
         if (!editBtn) return;
+        if (isAwaitingResponse) {
+            return;
+        }
 
         const wrapper = editBtn.closest('.message-wrapper');
         const indexStr = wrapper?.dataset.index;
@@ -443,6 +510,7 @@ function initCopyHandler(element) {
         const messagesToRemove = history.slice(editIndex);
         history = history.slice(0, editIndex);
         renderHistory();
+        setEditingState(true);
 
         const idsToDelete = messagesToRemove
             .map(msg => msg?.messageId)
@@ -490,9 +558,10 @@ function renderMessage(role, content, isError = false, displayContent = null, me
         ? ''
         : `<div class="role-icon icon-model"><svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" width="1em"><path d="M12.34 5.953a8.233 8.233 0 01-.247-1.125V3.72a8.25 8.25 0 015.562 2.232H12.34zm-.69 0c.113-.373.199-.755.257-1.145V3.72a8.25 8.25 0 00-5.562 2.232h5.304zm-5.433.187h5.373a7.98 7.98 0 01-.267.696 8.41 8.41 0 01-1.76 2.65L6.216 6.14zm-.264-.187H2.977v.187h2.915a8.436 8.436 0 00-2.357 5.767H0v.186h3.535a8.436 8.436 0 002.357 5.767H2.977v.186h2.976v2.977h.187v-2.915a8.436 8.436 0 005.767 2.357V24h.186v-3.535a8.436 8.436 0 005.767-2.357v2.915h.186v-2.977h2.977v-.186h-2.915a8.436 8.436 0 002.357-5.767H24v-.186h-3.535a8.436 8.436 0 00-2.357-5.767h2.915v-.187h-2.977V2.977h-.186v2.915a8.436 8.436 0 00-5.767-2.357V0h-.186v3.535A8.436 8.436 0 006.14 5.892V2.977h-.187v2.976zm6.14 14.326a8.25 8.25 0 005.562-2.233H12.34c-.108.367-.19.743-.247 1.126v1.107zm-.186-1.087a8.015 8.015 0 00-.258-1.146H6.345a8.25 8.25 0 005.562 2.233v-1.087zm-8.186-7.285h1.107a8.23 8.23 0 001.125-.247V6.345a8.25 8.25 0 00-2.232 5.562zm1.087.186H3.72a8.25 8.25 0 002.232 5.562v-5.304a8.012 8.012 0 00-1.145-.258zm15.47-.186a8.25 8.25 0 00-2.232-5.562v5.315c.367.108.743.19 1.126.247h1.107zm-1.086.186c-.39.058-.772.144-1.146.258v5.304a8.25 8.25 0 002.233-5.562h-1.087zm-1.332 5.69V12.41a7.97 7.97 0 00-.696.267 8.409 8.409 0 00-2.65 1.76l3.346 3.346zm0-6.18v-5.45l-.012-.013h-5.451c.076.235.162.468.26.696a8.698 8.698 0 001.819 2.688 8.698 8.698 0 002.688 1.82c.228.097.46.183.696.259zM6.14 17.848V12.41c.235.078.468.167.696.267a8.403 8.403 0 012.688 1.799 8.404 8.404 0 011.799 2.688c.1.228.19.46.267.696H6.152l-.012-.012zm0-6.245V6.326l3.29 3.29a8.716 8.716 0 01-2.594 1.728 8.14 8.14 0 01-.696.259zm6.257 6.257h5.277l-3.29-3.29a8.716 8.716 0 00-1.728 2.594 8.135 8.135 0 00-.259.696zm-2.347-7.81a9.435 9.435 0 01-2.88 1.96 9.14 9.14 0 012.88 1.94 9.14 9.14 0 011.94 2.88 9.435 9.435 0 011.96-2.88 9.14 9.14 0 012.88-1.94 9.435 9.435 0 01-2.88-1.96 9.434 9.434 0 01-1.96-2.88 9.14 9.14 0 01-1.94 2.88z"/></svg></div>`;
 
+    const editButtonDisabledAttr = isAwaitingResponse ? ' disabled aria-disabled="true"' : ' aria-disabled="false"';
     const editButtonHtml = isUser
         ? `
-            <button type="button" class="edit-message-btn message-action-btn text-token-text-secondary hover:bg-token-bg-secondary rounded-lg" aria-label="編輯訊息">
+            <button type="button" class="edit-message-btn message-action-btn text-token-text-secondary hover:bg-token-bg-secondary rounded-lg" aria-label="編輯訊息"${editButtonDisabledAttr}>
                 <span class="message-action-inner flex items-center justify-center touch:w-10 h-8 w-8">
                     ${MESSAGE_EDIT_ICON}
                 </span>
@@ -558,10 +627,13 @@ function renderConversationList(conversations) {
     }
 
     conversationListEl.innerHTML = '';
+    const locked = isConversationActionLocked();
     conversations.forEach(conv => {
         const item = document.createElement('div');
-        item.className = 'history-item' + (conv.id === currentConversationId ? ' active' : '');
+        const baseClass = 'history-item' + (conv.id === currentConversationId ? ' active' : '');
+        item.className = baseClass + (locked ? ' disabled' : '');
         item.dataset.id = conv.id;
+        item.setAttribute('aria-disabled', locked.toString());
 
         const title = document.createElement('span');
         title.className = 'history-title';
@@ -588,6 +660,10 @@ function renderConversationList(conversations) {
         item.appendChild(actions);
 
         item.addEventListener('click', () => {
+            if (isConversationActionLocked()) {
+                notifyConversationActionLocked('切換對話');
+                return;
+            }
             if (conv.id === currentConversationId) return;
             loadMessages(conv.id);
             closeMobileSidebar();
@@ -595,6 +671,7 @@ function renderConversationList(conversations) {
 
         conversationListEl.appendChild(item);
     });
+    updateConversationItemsState();
 }
 
 function renderHistory() {
@@ -693,6 +770,10 @@ async function createConversation(title = 'New chat') {
 async function handleNewChat() {
     if (!currentUser) {
         setAuthHint('請先登入再建立對話', true);
+        return;
+    }
+    if (isConversationActionLocked()) {
+        notifyConversationActionLocked('建立新對話');
         return;
     }
     await createConversation('New chat');
@@ -897,6 +978,7 @@ async function handleSignOut() {
         clearChatUI();
         clearHistoryList();
         currentConversationId = null;
+        setEditingState(false);
         setAuthHint('已登出');
         clearAuthFields(true);
         closeMobileSidebar();
@@ -1025,10 +1107,15 @@ async function sendMessage() {
 
     const activeConvId = currentConversationId;
 
+    if (isEditingMessage) {
+        setEditingState(false);
+    }
+
     isAwaitingResponse = true;
     inputEl.value = "";
     inputEl.style.height = 'auto';
     updateSendButtonState();
+    updateConversationLockUI();
 
     const userMsg = { role: "user", parts: [{ text: composedText }], displayText: text, messageId: null };
     history.push(userMsg);
@@ -1076,6 +1163,7 @@ async function sendMessage() {
     } finally {
         isAwaitingResponse = false;
         updateSendButtonState();
+        updateConversationLockUI();
         if (window.innerWidth > 768 && currentConversationId === activeConvId) {
             inputEl.focus();
         }
@@ -1109,4 +1197,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => toggleMobileSidebar());
     if (mobileBackdrop) mobileBackdrop.addEventListener('click', closeMobileSidebar);
     updateSendButtonState();
+    updateConversationLockUI();
 });
