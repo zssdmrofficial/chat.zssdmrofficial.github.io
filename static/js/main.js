@@ -4,6 +4,16 @@ const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+// Force long polling to avoid QUIC transport errors on restricted networks.
+try {
+    db.settings({
+        experimentalAutoDetectLongPolling: true,
+        useFetchStreams: false,
+        merge: true,
+    });
+} catch (e) {
+    console.warn('無法套用 Firestore 連線設定', e);
+}
 
 let history = [];
 let currentConversationId = null;
