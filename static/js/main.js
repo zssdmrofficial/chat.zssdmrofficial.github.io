@@ -48,6 +48,9 @@ const MESSAGE_COPY_ICON = `
 const MESSAGE_COPY_SUCCESS_ICON = `
     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M15.4835 4.14551C15.6794 3.85999 16.069 3.78747 16.3545 3.9834C16.6401 4.17933 16.7126 4.56897 16.5167 4.85449L8.9688 15.8545C8.86289 16.0088 8.69334 16.1085 8.50689 16.125C8.32053 16.1415 8.13628 16.0737 8.00494 15.9404L3.55377 11.4219L4.00005 10.9824L4.44634 10.542L8.36431 14.5176L15.4835 4.14551ZM3.55962 10.5352C3.80622 10.2922 4.20328 10.2955 4.44634 10.542L3.55377 11.4219C3.31073 11.1752 3.31297 10.7782 3.55962 10.5352Z"></path></svg>
 `;
+const MESSAGE_EDIT_ICON = `
+<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="icon"><path d="M11.3312 3.56837C12.7488 2.28756 14.9376 2.33009 16.3038 3.6963L16.4318 3.83106C17.6712 5.20294 17.6712 7.29708 16.4318 8.66895L16.3038 8.80372L10.0118 15.0947C9.68833 15.4182 9.45378 15.6553 9.22179 15.8457L8.98742 16.0225C8.78227 16.1626 8.56423 16.2832 8.33703 16.3828L8.10753 16.4756C7.92576 16.5422 7.73836 16.5902 7.5216 16.6348L6.75695 16.7705L4.36339 17.169C4.22053 17.1928 4.06908 17.2188 3.94054 17.2285C3.84177 17.236 3.70827 17.2386 3.56261 17.2031L3.41417 17.1543C3.19115 17.0586 3.00741 16.8908 2.89171 16.6797L2.84581 16.5859C2.75951 16.3846 2.76168 16.1912 2.7716 16.0596C2.7813 15.931 2.80736 15.7796 2.83117 15.6367L3.2296 13.2432L3.36437 12.4785C3.40893 12.2616 3.45789 12.0745 3.52453 11.8926L3.6173 11.6621C3.71685 11.4352 3.83766 11.2176 3.97765 11.0127L4.15343 10.7783C4.34386 10.5462 4.58164 10.312 4.90538 9.98829L11.1964 3.6963L11.3312 3.56837ZM5.84581 10.9287C5.49664 11.2779 5.31252 11.4634 5.18663 11.6162L5.07531 11.7627C4.98188 11.8995 4.90151 12.0448 4.83507 12.1963L4.77355 12.3506C4.73321 12.4607 4.70242 12.5761 4.66808 12.7451L4.54113 13.4619L4.14269 15.8555L4.14171 15.8574H4.14464L6.5382 15.458L7.25499 15.332C7.424 15.2977 7.5394 15.2669 7.64953 15.2266L7.80285 15.165C7.95455 15.0986 8.09947 15.0174 8.23644 14.9238L8.3839 14.8135C8.53668 14.6876 8.72225 14.5035 9.0714 14.1543L14.0587 9.16602L10.8331 5.94044L5.84581 10.9287ZM15.3634 4.63673C14.5281 3.80141 13.2057 3.74938 12.3097 4.48048L12.1368 4.63673L11.7735 5.00001L15.0001 8.22559L15.3634 7.86329L15.5196 7.68946C16.2015 6.85326 16.2015 5.64676 15.5196 4.81056L15.3634 4.63673Z"></path></svg>
+`;
 
 const SEND_ICON_DEFAULT = `
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -403,25 +406,44 @@ function initCopyHandler(element) {
         }
 
         const messageBtn = ev.target.closest('.copy-message-btn');
-        if (!messageBtn) return;
+        if (messageBtn) {
+            const wrapper = messageBtn.closest('.message-wrapper');
+            const datasetValue = wrapper?.dataset.raw || '';
+            const fallbackValue = wrapper?.querySelector('.text-content')?.innerText || '';
+            const textToCopy = datasetValue || fallbackValue;
 
-        const wrapper = messageBtn.closest('.message-wrapper');
-        const datasetValue = wrapper?.dataset.raw || '';
-        const fallbackValue = wrapper?.querySelector('.text-content')?.innerText || '';
-        const textToCopy = datasetValue || fallbackValue;
+            if (!textToCopy) {
+                flashMessageCopyState(messageBtn, 'error');
+                return;
+            }
 
-        if (!textToCopy) {
-            flashMessageCopyState(messageBtn, 'error');
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                flashMessageCopyState(messageBtn, 'copied');
+            } catch (err) {
+                console.error('複製訊息失敗', err);
+                flashMessageCopyState(messageBtn, 'error');
+            }
             return;
         }
 
-        try {
-            await navigator.clipboard.writeText(textToCopy);
-            flashMessageCopyState(messageBtn, 'copied');
-        } catch (err) {
-            console.error('複製訊息失敗', err);
-            flashMessageCopyState(messageBtn, 'error');
-        }
+        const editBtn = ev.target.closest('.edit-message-btn');
+        if (!editBtn) return;
+
+        const wrapper = editBtn.closest('.message-wrapper');
+        const datasetValue = wrapper?.dataset.raw || '';
+        const fallbackValue = wrapper?.querySelector('.text-content')?.innerText || '';
+        const textToEdit = datasetValue || fallbackValue;
+
+        if (!textToEdit) return;
+
+        inputEl.value = textToEdit;
+        inputEl.style.height = 'auto';
+        inputEl.style.height = (inputEl.scrollHeight) + 'px';
+        inputEl.focus();
+        const pos = inputEl.value.length;
+        inputEl.setSelectionRange(pos, pos);
+        updateSendButtonState();
     });
 }
 
@@ -448,18 +470,29 @@ function renderMessage(role, content, isError = false, displayContent = null) {
         ? ''
         : `<div class="role-icon icon-model"><svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" width="1em"><path d="M12.34 5.953a8.233 8.233 0 01-.247-1.125V3.72a8.25 8.25 0 015.562 2.232H12.34zm-.69 0c.113-.373.199-.755.257-1.145V3.72a8.25 8.25 0 00-5.562 2.232h5.304zm-5.433.187h5.373a7.98 7.98 0 01-.267.696 8.41 8.41 0 01-1.76 2.65L6.216 6.14zm-.264-.187H2.977v.187h2.915a8.436 8.436 0 00-2.357 5.767H0v.186h3.535a8.436 8.436 0 002.357 5.767H2.977v.186h2.976v2.977h.187v-2.915a8.436 8.436 0 005.767 2.357V24h.186v-3.535a8.436 8.436 0 005.767-2.357v2.915h.186v-2.977h2.977v-.186h-2.915a8.436 8.436 0 002.357-5.767H24v-.186h-3.535a8.436 8.436 0 00-2.357-5.767h2.915v-.187h-2.977V2.977h-.186v2.915a8.436 8.436 0 00-5.767-2.357V0h-.186v3.535A8.436 8.436 0 006.14 5.892V2.977h-.187v2.976zm6.14 14.326a8.25 8.25 0 005.562-2.233H12.34c-.108.367-.19.743-.247 1.126v1.107zm-.186-1.087a8.015 8.015 0 00-.258-1.146H6.345a8.25 8.25 0 005.562 2.233v-1.087zm-8.186-7.285h1.107a8.23 8.23 0 001.125-.247V6.345a8.25 8.25 0 00-2.232 5.562zm1.087.186H3.72a8.25 8.25 0 002.232 5.562v-5.304a8.012 8.012 0 00-1.145-.258zm15.47-.186a8.25 8.25 0 00-2.232-5.562v5.315c.367.108.743.19 1.126.247h1.107zm-1.086.186c-.39.058-.772.144-1.146.258v5.304a8.25 8.25 0 002.233-5.562h-1.087zm-1.332 5.69V12.41a7.97 7.97 0 00-.696.267 8.409 8.409 0 00-2.65 1.76l3.346 3.346zm0-6.18v-5.45l-.012-.013h-5.451c.076.235.162.468.26.696a8.698 8.698 0 001.819 2.688 8.698 8.698 0 002.688 1.82c.228.097.46.183.696.259zM6.14 17.848V12.41c.235.078.468.167.696.267a8.403 8.403 0 012.688 1.799 8.404 8.404 0 011.799 2.688c.1.228.19.46.267.696H6.152l-.012-.012zm0-6.245V6.326l3.29 3.29a8.716 8.716 0 01-2.594 1.728 8.14 8.14 0 01-.696.259zm6.257 6.257h5.277l-3.29-3.29a8.716 8.716 0 00-1.728 2.594 8.135 8.135 0 00-.259.696zm-2.347-7.81a9.435 9.435 0 01-2.88 1.96 9.14 9.14 0 012.88 1.94 9.14 9.14 0 011.94 2.88 9.435 9.435 0 011.96-2.88 9.14 9.14 0 012.88-1.94 9.435 9.435 0 01-2.88-1.96 9.434 9.434 0 01-1.96-2.88 9.14 9.14 0 01-1.94 2.88z"/></svg></div>`;
 
+    const editButtonHtml = isUser
+        ? `
+            <button type="button" class="edit-message-btn message-action-btn text-token-text-secondary hover:bg-token-bg-secondary rounded-lg" aria-label="編輯訊息">
+                <span class="message-action-inner flex items-center justify-center touch:w-10 h-8 w-8">
+                    ${MESSAGE_EDIT_ICON}
+                </span>
+            </button>
+        `
+        : '';
+
     msgDiv.innerHTML = `
         <div class="message-content">
             ${iconHtml}
             <div class="text-content">${innerContent}</div>
         </div>
         <div class="message-footer">
-            <button type="button" class="copy-message-btn text-token-text-secondary hover:bg-token-bg-secondary rounded-lg" aria-label="複製" aria-pressed="false" data-testid="copy-turn-action-button" data-state="closed">
-                <span class="copy-button-inner flex items-center justify-center touch:w-10 h-8 w-8">
+            <button type="button" class="copy-message-btn message-action-btn text-token-text-secondary hover:bg-token-bg-secondary rounded-lg" aria-label="複製" aria-pressed="false" data-testid="copy-turn-action-button" data-state="closed">
+                <span class="copy-button-inner message-action-inner flex items-center justify-center touch:w-10 h-8 w-8">
                     <span class="copy-icon copy-icon-default" aria-hidden="true">${MESSAGE_COPY_ICON}</span>
                     <span class="copy-icon copy-icon-success" aria-hidden="true">${MESSAGE_COPY_SUCCESS_ICON}</span>
                 </span>
             </button>
+            ${editButtonHtml}
         </div>
     `;
 

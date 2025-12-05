@@ -409,9 +409,11 @@ body {
     padding: 0 24px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
 }
 
-.copy-message-btn {
+.message-action-btn {
     border: none;
     background: transparent;
     color: var(--text-secondary);
@@ -424,22 +426,31 @@ body {
     opacity: 0;
 }
 
-.message-wrapper:hover .copy-message-btn,
-.message-wrapper:focus-within .copy-message-btn,
-.copy-message-btn:focus-visible {
+.message-wrapper:hover .message-action-btn,
+.message-wrapper:focus-within .message-action-btn,
+.message-action-btn:focus-visible {
     opacity: 1;
 }
 
-.copy-message-btn:hover {
+.message-action-btn:hover {
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.05);
+}
+
+.edit-message-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.copy-message-btn {
+    position: relative;
 }
 
 .copy-message-btn.copy-error {
     color: #ef4444;
 }
 
-.copy-button-inner {
+.message-action-inner {
     width: 32px;
     height: 32px;
     display: inline-flex;
