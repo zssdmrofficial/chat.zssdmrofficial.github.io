@@ -13,6 +13,8 @@
     --text-secondary: rgba(255, 255, 255, 0.65);
     --code-bg: rgba(0, 0, 0, 0.3);
     --user-msg-bg: rgba(255, 255, 255, 0.06);
+    --user-bubble-bg: color-mix(in srgb, var(--accent-color) 65%, white 25%);
+    --user-bubble-text: #1b1b1b;
     --border-color: var(--glass-border);
     --radius-ui: 24px;
     --radius-sm: 12px;
@@ -500,6 +502,34 @@ body {
     min-width: 0;
     word-wrap: break-word;
     color: var(--text-secondary);
+}
+
+.message-wrapper[data-role="user"] .message-content {
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.message-wrapper[data-role="user"] .text-content {
+    flex: 0 1 auto;
+    margin-left: auto;
+    background: var(--accent-strong);
+    color: var(--user-bubble-text);
+    padding: 14px 22px;
+    border-radius: 999px;
+    max-width: min(75%, 480px);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-color) 40%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.message-wrapper[data-role="user"] .text-content p {
+    margin: 0;
+    color: inherit;
+}
+
+.message-wrapper[data-role="user"] .message-footer {
+    justify-content: flex-end;
 }
 
 .text-content p {
