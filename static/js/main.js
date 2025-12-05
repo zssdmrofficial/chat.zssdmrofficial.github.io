@@ -431,11 +431,26 @@ function initCopyHandler(element) {
         if (!editBtn) return;
 
         const wrapper = editBtn.closest('.message-wrapper');
-        const datasetValue = wrapper?.dataset.raw || '';
-        const fallbackValue = wrapper?.querySelector('.text-content')?.innerText || '';
-        const textToEdit = datasetValue || fallbackValue;
+        const indexStr = wrapper?.dataset.index;
+        const editIndex = Number(indexStr);
+        if (!Number.isFinite(editIndex) || editIndex < 0 || editIndex >= history.length) return;
 
-        if (!textToEdit) return;
+        const targetMessage = history[editIndex];
+        if (!targetMessage || targetMessage.role !== 'user') return;
+
+        const textToEdit = targetMessage.displayText || targetMessage.parts?.[0]?.text || '';
+
+        const messagesToRemove = history.slice(editIndex);
+        history = history.slice(0, editIndex);
+        renderHistory();
+
+        const idsToDelete = messagesToRemove
+            .map(msg => msg?.messageId)
+            .filter(id => typeof id === 'string' && id.length > 0);
+
+        if (idsToDelete.length && currentConversationId) {
+            await deleteMessagesByIds(currentConversationId, idsToDelete);
+        }
 
         inputEl.value = textToEdit;
         inputEl.style.height = 'auto';
@@ -447,7 +462,7 @@ function initCopyHandler(element) {
     });
 }
 
-function renderMessage(role, content, isError = false, displayContent = null) {
+function renderMessage(role, content, isError = false, displayContent = null, messageIndex = null) {
     const isUser = role === "user";
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message-wrapper';
@@ -456,6 +471,11 @@ function renderMessage(role, content, isError = false, displayContent = null) {
     const viewText = typeof displayContent === 'string' ? displayContent : content;
     const normalizedText = typeof viewText === 'string' ? viewText : '';
     msgDiv.dataset.raw = normalizedText;
+    if (typeof messageIndex === 'number' && !Number.isNaN(messageIndex)) {
+        msgDiv.dataset.index = String(messageIndex);
+    } else {
+        delete msgDiv.dataset.index;
+    }
 
     let innerContent = "";
     if (isError) {
@@ -581,7 +601,7 @@ function renderHistory() {
     chatBoxEl.innerHTML = '';
     history.forEach((msg, index) => {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
-        renderMessage(msg.role, msg.parts[0].text, false, msg.displayText);
+        renderMessage(msg.role, msg.parts[0].text, false, msg.displayText, index);
     });
 }
 
@@ -695,7 +715,7 @@ async function loadMessages(convId) {
             const data = d.data();
             const content = data.content || '';
             const displayText = data.displayContent || content;
-            return { role: data.role, parts: [{ text: content }], displayText };
+            return { role: data.role, parts: [{ text: content }], displayText, messageId: d.id };
         });
         currentConversationId = convId;
         renderHistory();
@@ -707,12 +727,12 @@ async function loadMessages(convId) {
 }
 
 async function addMessage(convId, role, content, displayContent = null) {
-    if (!convId) return;
+    if (!convId) return null;
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) return null;
     try {
         const messagesRef = db.collection('conversations').doc(convId).collection('messages');
-        await messagesRef.add({
+        const docRef = await messagesRef.add({
             role,
             content,
             displayContent: displayContent || content,
@@ -722,8 +742,10 @@ async function addMessage(convId, role, content, displayContent = null) {
         await db.collection('conversations').doc(convId).update({
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
+        return docRef.id;
     } catch (e) {
         console.error('寫入訊息失敗', e);
+        return null;
     }
 }
 
@@ -781,6 +803,40 @@ async function deleteConversation(convId) {
     } catch (e) {
         console.error('刪除對話失敗', e);
         setAuthHint('刪除對話失敗，請稍後再試', true);
+    }
+}
+
+async function deleteMessagesByIds(convId, messageIds = []) {
+    if (!convId || !Array.isArray(messageIds) || !messageIds.length) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        const messagesRef = db.collection('conversations').doc(convId).collection('messages');
+        const commits = [];
+        const BATCH_LIMIT = 450;
+        let batch = db.batch();
+        let counter = 0;
+
+        messageIds.forEach((id) => {
+            if (!id) return;
+            batch.delete(messagesRef.doc(id));
+            counter++;
+            if (counter === BATCH_LIMIT) {
+                commits.push(batch.commit());
+                batch = db.batch();
+                counter = 0;
+            }
+        });
+
+        if (counter > 0) {
+            commits.push(batch.commit());
+        }
+
+        if (commits.length) {
+            await Promise.all(commits);
+        }
+    } catch (e) {
+        console.error('刪除訊息失敗', e);
     }
 }
 
@@ -974,15 +1030,16 @@ async function sendMessage() {
     inputEl.style.height = 'auto';
     updateSendButtonState();
 
-    const userMsg = { role: "user", parts: [{ text: composedText }], displayText: text };
+    const userMsg = { role: "user", parts: [{ text: composedText }], displayText: text, messageId: null };
     history.push(userMsg);
-    renderMessage("user", composedText, false, text);
+    renderMessage("user", composedText, false, text, history.length - 1);
 
     const loadingId = showLoading();
 
     try {
         if (currentUser && activeConvId) {
-            await addMessage(activeConvId, "user", composedText, text);
+            const userMsgId = await addMessage(activeConvId, "user", composedText, text);
+            userMsg.messageId = userMsgId;
             await updateConversationTitleIfEmpty(activeConvId, text);
         }
 
@@ -1002,11 +1059,12 @@ async function sendMessage() {
         }
 
         const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "API returned no content.";
-        const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
+        const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText, messageId: null };
         history.push(modelMsg);
-        renderMessage("model", responseText);
+        renderMessage("model", responseText, false, responseText, history.length - 1);
         if (currentUser && activeConvId) {
-            await addMessage(activeConvId, "model", responseText, responseText);
+            const modelMsgId = await addMessage(activeConvId, "model", responseText, responseText);
+            modelMsg.messageId = modelMsgId;
             await loadConversations(currentUser.uid);
         }
     } catch (e) {
