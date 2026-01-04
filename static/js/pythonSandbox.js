@@ -34,6 +34,8 @@ import json
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore", message="Matplotlib is currently using agg")
 import pandas as pd
 import numpy as np
 

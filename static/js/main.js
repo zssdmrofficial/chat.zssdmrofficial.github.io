@@ -1304,6 +1304,7 @@ async function sendMessage() {
                 // B. Execute Code
                 let resultLogs = "";
                 let resultImages = [];
+                let resultFiles = [];
 
                 // Show a temporary loading indicator for execution
                 const execLoadingId = showLoading();
@@ -1312,6 +1313,7 @@ async function sendMessage() {
                     const execResult = await pythonSandboxInstance.execute(code, activeConvId);
                     resultLogs = execResult.logs || "No text output.";
                     resultImages = execResult.images || [];
+                    resultFiles = execResult.files || [];
                 } catch (err) {
                     resultLogs = `Execution Error: ${err.message}`;
                 } finally {
@@ -1323,6 +1325,16 @@ async function sendMessage() {
                 if (resultImages.length > 0) {
                     const imgMd = resultImages.map(img => `\n![Plot](data:${img.type};base64,${img.data})`).join('\n');
                     outputDisplay += imgMd;
+                }
+
+                if (resultFiles.length > 0) {
+                    const fileHtml = resultFiles.map(file =>
+                        `\n<br/><a href="data:${file.type};base64,${file.data}" download="${file.name}" style="text-decoration:none; color:var(--accent-strong); display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:10px 14px; border:1px solid var(--accent-strong); border-radius:8px; transition:all 0.2s; background:rgba(255,255,255,0.02);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px;"><path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        下載檔案: ${file.name}
+                    </a>`
+                    ).join('');
+                    outputDisplay += `\n\n**產生的檔案:**${fileHtml}`;
                 }
 
                 // We render the result as a SYSTEM/USER message visually for the user to see the output
