@@ -19,6 +19,24 @@ let currentUser = null;
 let isCreatingConversation = false;
 let isAwaitingResponse = false;
 let isEditingMessage = false;
+let pythonSandboxInstance = null;
+
+// 移除 TOOLS_SCHEMA 定義，改用前端解析
+const PYTHON_BLOCK_REGEX = /```python\s*([\s\S]*?)```/;
+
+const CUSTOM_SYSTEM_PROMPT_ADDITION = `
+【能力擴充通知】
+你現在擁有一個 Python 執行環境 (Pyodide)。
+如果你需要進行數學運算、數據分析(pandas)、或繪製圖表(matplotlib)，請直接在回答中輸出一块 Python 程式碼區塊。
+格式範例：
+\`\`\`python
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3])
+plt.show()
+\`\`\`
+系統會自動偵測並執行該代碼，然後將執行結果(包含文字輸出與圖表)回傳給你。
+請勿在代碼區塊中使用 Emoji。
+`;
 
 const chatBoxEl = document.getElementById("chat-box");
 const inputEl = document.getElementById("user-input");
@@ -96,6 +114,20 @@ const PROMPT_TOOLS = [];
         });
     }
 })();
+const PYTHON_ICON = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v20M2 12h20" />
+        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+`;
+
+const CHEVRON_DOWN_ICON = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 9 6 6 6-6"/>
+    </svg>
+`;
+
 const activeToolIds = new Set();
 
 function setElementVisibility(el, shouldShow) {
@@ -563,7 +595,7 @@ function scheduleBubbleShapeRefresh() {
 
 window.addEventListener('resize', scheduleBubbleShapeRefresh);
 
-function renderMessage(role, content, isError = false, displayContent = null, messageIndex = null) {
+function renderMessage(role, content, isError = false, displayContent = null, messageIndex = null, isHtml = false) {
     const isUser = role === "user";
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message-wrapper';
@@ -583,6 +615,8 @@ function renderMessage(role, content, isError = false, displayContent = null, me
         innerContent = `<div style="color: #ef4444;">${escapeHtml(normalizedText)}</div>`;
     } else if (isUser) {
         innerContent = `<p>${escapeHtml(normalizedText).replace(/\n/g, '<br>')}</p>`;
+    } else if (isHtml) {
+        innerContent = displayContent;
     } else {
         innerContent = markdownToHtml(normalizedText);
     }
@@ -713,7 +747,8 @@ function renderHistory() {
     chatBoxEl.innerHTML = '';
     history.forEach((msg, index) => {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
-        renderMessage(msg.role, msg.parts[0].text, false, msg.displayText, index);
+        const isHtml = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
+        renderMessage(msg.role, msg.parts[0].text, false, msg.displayText, index, isHtml);
     });
 }
 
@@ -1108,6 +1143,12 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 console.error(`[API] 非 503/429 錯誤: ${res.status}`, err);
+                // 400 Error (Bad Request) 通常代表參數錯誤 (e.g.model 不支援 function calling)
+                // 這種情況重試沒有意義，直接拋出錯誤以便上層處理 (fallback)
+                if (res.status === 400) {
+                    const errorMsg = err?.error?.message || `HTTP ${res.status}`;
+                    throw new Error(errorMsg); // 這裡 throw 會被下方的 catch 接住，我們需要在 catch 裡判斷是否重試
+                }
                 throw new Error(err?.error?.message || `HTTP ${res.status}`);
             }
 
@@ -1116,6 +1157,10 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
 
         } catch (e) {
             console.error(`[API] 呼叫失敗 (第 ${attempt} 次):`, e);
+            // 如果是 400 錯誤或訊息包含 Function calling 不支援，直接不重試
+            if (e.message && (e.message.startsWith("HTTP 400") || e.message.includes("Function calling is not enabled"))) {
+                throw e;
+            }
             if (attempt >= maxRetries) throw e;
             await new Promise(r => setTimeout(r, 2000));
         }
@@ -1124,9 +1169,8 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
 }
 
 async function sendMessage() {
-    if (isAwaitingResponse) {
-        return;
-    }
+    if (isAwaitingResponse) return;
+
     const text = inputEl.value.trim();
     if (!text) return;
 
@@ -1152,6 +1196,7 @@ async function sendMessage() {
     updateSendButtonState();
     updateConversationLockUI();
 
+    // 1. Render User Message
     const userMsg = { role: "user", parts: [{ text: composedText }], displayText: text, messageId: null };
     history.push(userMsg);
     renderMessage("user", composedText, false, text, history.length - 1);
@@ -1165,30 +1210,155 @@ async function sendMessage() {
             await updateConversationTitleIfEmpty(activeConvId, text);
         }
 
-        const payloadHistory = [
-            { role: "user", parts: [{ text: SYSTEM_INSTRUCTION }] },
-            ...history.map(msg => ({
-                role: msg.role,
-                parts: msg.parts
-            }))
-        ];
+        let keepGoing = true;
+        let loopCount = 0;
+        const MAX_LOOPS = 5;
 
-        const data = await callApiWithRetry({ contents: payloadHistory }, loadingId);
-        removeLoading(loadingId);
+        // Function Call Loop
+        while (keepGoing && loopCount < MAX_LOOPS) {
+            loopCount++;
 
-        if (currentConversationId !== activeConvId) {
-            return;
-        }
+            /* 
+             * Construct History for API
+             * 確保完全不發送 functionCall/functionResponse 物件，避免 API 報錯
+             */
+            let payloadHistory = [
+                { role: "user", parts: [{ text: SYSTEM_INSTRUCTION + "\n" + CUSTOM_SYSTEM_PROMPT_ADDITION }] },
+                ...history.map(msg => {
+                    // 深拷貝 parts 以免影響原始資料
+                    const sanitizedParts = msg.parts.map(p => {
+                        if (p.functionCall) {
+                            return { text: `[模型嘗試執行代碼]:\n${p.functionCall.args?.code || "(無代碼)"}` };
+                        }
+                        if (p.functionResponse) {
+                            return { text: `[執行結果回報]:\n${JSON.stringify(p.functionResponse.response?.content || {})}` };
+                        }
+                        return p;
+                    });
 
-        const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "API returned no content.";
-        const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText, messageId: null };
-        history.push(modelMsg);
-        renderMessage("model", responseText, false, responseText, history.length - 1);
-        if (currentUser && activeConvId) {
-            const modelMsgId = await addMessage(activeConvId, "model", responseText, responseText);
-            modelMsg.messageId = modelMsgId;
-            await loadConversations(currentUser.uid);
-        }
+                    return {
+                        role: (msg.role === 'function') ? 'user' : msg.role,
+                        parts: sanitizedParts
+                    };
+                })
+            ];
+
+            // 2. Call API (NO TOOLS SCHEMA)
+            // 純文字請求，不帶 tools，避免 400 錯誤
+            const requestBody = { contents: payloadHistory };
+
+            const data = await callApiWithRetry(requestBody, loadingId);
+
+            const candidate = data?.candidates?.[0];
+            const content = candidate?.content;
+            const part = content?.parts?.[0];
+
+            if (!part) throw new Error("API returned no content.");
+
+            const responseText = part.text || "";
+
+            // 3. Client-Side Tool Parsing (Regex)
+            const match = responseText.match(PYTHON_BLOCK_REGEX);
+
+            if (match && pythonSandboxInstance) {
+                // A. Model returned Python code
+                const code = match[1];
+
+                // Create the Collapsible Python Indicator
+                const indicatorId = `py-exec-${Date.now()}`;
+                const escapedCode = escapeHtml(code);
+                const pythonAnalysisHtml = `
+                    <div class="python-analysis-indicator" id="${indicatorId}">
+                        <div class="python-analysis-header" onclick="this.parentElement.classList.toggle('expanded'); scheduleBubbleShapeRefresh();">
+                            <div class="status-text">
+                                ${PYTHON_ICON}
+                                <span>模型正在使用 Python 分析</span>
+                            </div>
+                            <div class="status-icon">
+                                ${CHEVRON_DOWN_ICON}
+                            </div>
+                        </div>
+                        <div class="python-analysis-code">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span>python</span>
+                                    <button class="copy-button" onclick="copyCode(this, \`${escapedCode.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                                        複製
+                                    </button>
+                                </div>
+                                <pre><code>${escapedCode}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Render Model's "Thinking" (Indicator)
+                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: pythonAnalysisHtml, isHtml: true };
+                history.push(modelMsg);
+                renderMessage("model", responseText, false, pythonAnalysisHtml, history.length - 1, true);
+
+                if (currentUser && activeConvId) {
+                    await addMessage(activeConvId, "model", responseText, pythonAnalysisHtml);
+                }
+
+                // B. Execute Code
+                let resultLogs = "";
+                let resultImages = [];
+
+                // Show a temporary loading indicator for execution
+                const execLoadingId = showLoading();
+
+                try {
+                    const execResult = await pythonSandboxInstance.execute(code, activeConvId);
+                    resultLogs = execResult.logs || "No text output.";
+                    resultImages = execResult.images || [];
+                } catch (err) {
+                    resultLogs = `Execution Error: ${err.message}`;
+                } finally {
+                    removeLoading(execLoadingId);
+                }
+
+                // C. Render Results locally
+                let outputDisplay = `**Python沙盒執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
+                if (resultImages.length > 0) {
+                    const imgMd = resultImages.map(img => `\n![Plot](data:${img.type};base64,${img.data})`).join('\n');
+                    outputDisplay += imgMd;
+                }
+
+                // We render the result as a SYSTEM/USER message visually for the user to see the output
+                // But in history, we frame it as User feedback so the model knows what happened.
+                const resultMsgDisplay = `[系統通知] 代碼執行完畢。\n${outputDisplay}`;
+                const userFeedbackMsg = {
+                    role: "user",
+                    parts: [{ text: `(System: Code execution result)\n${outputDisplay}\n請根據以上執行結果回答使用者的問題。` }],
+                    displayText: outputDisplay,
+                    messageId: null
+                };
+
+                history.push(userFeedbackMsg);
+                renderMessage("model", "", false, outputDisplay); // Render as model output style for better UX, or distinct style
+
+                if (currentUser && activeConvId) {
+                    await addMessage(activeConvId, "model", "", outputDisplay); // Save visually as model output
+                }
+
+                // Continue loop: Send the result back to model to get final explanation
+                continue;
+
+            } else {
+                // Text Response (Final Answer) or No Code Found
+                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
+                history.push(modelMsg);
+                renderMessage("model", responseText, false, responseText, history.length - 1);
+
+                if (currentUser && activeConvId) {
+                    await addMessage(activeConvId, "model", responseText, responseText);
+                    await loadConversations(currentUser.uid);
+                }
+                keepGoing = false;
+            }
+        } // end while
+
     } catch (e) {
         removeLoading(loadingId);
         if (currentConversationId === activeConvId) {
@@ -1196,6 +1366,7 @@ async function sendMessage() {
         }
         console.error(e);
     } finally {
+        removeLoading(loadingId);
         isAwaitingResponse = false;
         updateSendButtonState();
         updateConversationLockUI();
@@ -1220,7 +1391,21 @@ inputEl.addEventListener('input', function () {
     updateSendButtonState();
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Init Python Sandbox
+    try {
+        const module = await import('./pythonSandbox.js');
+        pythonSandboxInstance = module.pythonSandbox;
+        // Pre-warm the environment
+        pythonSandboxInstance.init().then(() => {
+            console.log('Python Sandbox Environment Ready');
+        }).catch(err => {
+            console.warn('Python Sandbox failed to initialize:', err);
+        });
+    } catch (e) {
+        console.error('Failed to load pythonSandbox module:', e);
+    }
+
     updateAuthUI(currentUser);
     renderHistory();
     initCopyHandler(chatBoxEl);
@@ -1234,3 +1419,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSendButtonState();
     updateConversationLockUI();
 });
+
+window.copyCode = function (btn, code) {
+    navigator.clipboard.writeText(code).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '已複製！';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }).catch(err => {
+        console.error('Copy failed', err);
+    });
+};
