@@ -40,7 +40,7 @@ export class PythonSandbox {
                 };
             }
 
-            if (contentType.includes("application/octet-stream")) {
+            if (contentType.includes("application/octet-stream") || contentType.includes("application/zip")) {
                 const blob = await response.blob();
                 const base64Data = await this.blobToBase64(blob);
                 const filename = this.getFilenameFromDisposition(response.headers.get("Content-Disposition"));
