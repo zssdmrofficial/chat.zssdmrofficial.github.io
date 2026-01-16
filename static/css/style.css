@@ -472,6 +472,8 @@ body {
     font-size: 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     animation: slideInUp 0.4s ease-out backwards;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
 .message-wrapper:nth-child(even) {
@@ -748,6 +750,8 @@ p code {
     background-image: url('/static/images/background.png');
     background-size: cover;
     background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     filter: brightness(60%) grayscale(18%) blur(2px);
     -webkit-mask-image: linear-gradient(180deg, transparent, black 20%);
     mask-image: linear-gradient(180deg, transparent, black 20%);
@@ -1099,7 +1103,7 @@ button#send-button svg {
     height: 100%;
     object-fit: cover;
     filter: brightness(60%) grayscale(18%) blur(2px);
-    transform: scale(1.03);
+
 }
 
 .full-bg::after {
@@ -1127,7 +1131,7 @@ button#send-button svg {
     height: 100%;
     object-fit: cover;
     filter: brightness(60%) grayscale(18%) blur(2px);
-    transform: scale(1.03);
+
 }
 
 .full-bg::after {
