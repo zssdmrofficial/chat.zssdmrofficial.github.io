@@ -199,7 +199,6 @@ body {
     border-top: 1px solid var(--glass-border);
 }
 
-/* Python Analysis Indicator Styles */
 .python-analysis-indicator {
     display: flex;
     flex-direction: column;
@@ -261,8 +260,9 @@ body {
 }
 
 .python-analysis-indicator.expanded .python-analysis-code {
-    max-height: 800px; /* Large enough for most code */
+    max-height: 800px;
     border-top: 1px solid var(--glass-border);
+    overflow-y: auto;
 }
 
 .python-analysis-code .code-container {
