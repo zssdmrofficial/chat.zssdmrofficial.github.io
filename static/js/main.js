@@ -21,7 +21,6 @@ let isAwaitingResponse = false;
 let isEditingMessage = false;
 let pythonSandboxInstance = null;
 
-// 移除 TOOLS_SCHEMA 定義，改用前端解析
 const PYTHON_BLOCK_REGEX = /```python\s*([\s\S]*?)```/;
 
 const CUSTOM_SYSTEM_PROMPT_ADDITION = `
@@ -1144,11 +1143,10 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 console.error(`[API] 非 503/429 錯誤: ${res.status}`, err);
-                // 400 Error (Bad Request) 通常代表參數錯誤 (e.g.model 不支援 function calling)
-                // 這種情況重試沒有意義，直接拋出錯誤以便上層處理 (fallback)
+
                 if (res.status === 400) {
                     const errorMsg = err?.error?.message || `HTTP ${res.status}`;
-                    throw new Error(errorMsg); // 這裡 throw 會被下方的 catch 接住，我們需要在 catch 裡判斷是否重試
+                    throw new Error(errorMsg);
                 }
                 throw new Error(err?.error?.message || `HTTP ${res.status}`);
             }
@@ -1158,7 +1156,6 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
 
         } catch (e) {
             console.error(`[API] 呼叫失敗 (第 ${attempt} 次):`, e);
-            // 如果是 400 錯誤或訊息包含 Function calling 不支援，直接不重試
             if (e.message && (e.message.startsWith("HTTP 400") || e.message.includes("Function calling is not enabled"))) {
                 throw e;
             }
@@ -1197,7 +1194,6 @@ async function sendMessage() {
     updateSendButtonState();
     updateConversationLockUI();
 
-    // 1. Render User Message
     const userMsg = { role: "user", parts: [{ text: composedText }], displayText: text, messageId: null };
     history.push(userMsg);
     renderMessage("user", composedText, false, text, history.length - 1);
@@ -1215,18 +1211,12 @@ async function sendMessage() {
         let loopCount = 0;
         const MAX_LOOPS = 5;
 
-        // Function Call Loop
         while (keepGoing && loopCount < MAX_LOOPS) {
             loopCount++;
 
-            /* 
-             * Construct History for API
-             * 確保完全不發送 functionCall/functionResponse 物件，避免 API 報錯
-             */
             let payloadHistory = [
                 { role: "user", parts: [{ text: SYSTEM_INSTRUCTION + "\n" + CUSTOM_SYSTEM_PROMPT_ADDITION }] },
                 ...history.map(msg => {
-                    // 深拷貝 parts 以免影響原始資料
                     const sanitizedParts = msg.parts.map(p => {
                         if (p.functionCall) {
                             return { text: `[模型嘗試執行代碼]:\n${p.functionCall.args?.code || "(無代碼)"}` };
@@ -1244,8 +1234,6 @@ async function sendMessage() {
                 })
             ];
 
-            // 2. Call API (NO TOOLS SCHEMA)
-            // 純文字請求，不帶 tools，避免 400 錯誤
             const requestBody = { contents: payloadHistory };
 
             const data = await callApiWithRetry(requestBody, loadingId);
@@ -1258,14 +1246,11 @@ async function sendMessage() {
 
             const responseText = part.text || "";
 
-            // 3. Client-Side Tool Parsing (Regex)
             const match = responseText.match(PYTHON_BLOCK_REGEX);
 
             if (match && pythonSandboxInstance) {
-                // A. Model returned Python code
                 const code = match[1];
 
-                // Create the Collapsible Python Indicator
                 const indicatorId = `py-exec-${Date.now()}`;
                 const escapedCode = escapeHtml(code);
                 const pythonAnalysisHtml = `
@@ -1293,7 +1278,6 @@ async function sendMessage() {
                     </div>
                 `;
 
-                // Render Model's "Thinking" (Indicator)
                 const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: pythonAnalysisHtml, isHtml: true };
                 history.push(modelMsg);
                 renderMessage("model", responseText, false, pythonAnalysisHtml, history.length - 1, true);
@@ -1302,12 +1286,9 @@ async function sendMessage() {
                     await addMessage(activeConvId, "model", responseText, pythonAnalysisHtml);
                 }
 
-                // B. Execute Code
                 let resultLogs = "";
                 let resultImages = [];
                 let resultFiles = [];
-
-                // Show a temporary loading indicator for execution
                 const execLoadingId = showLoading();
 
                 try {
@@ -1321,7 +1302,6 @@ async function sendMessage() {
                     removeLoading(execLoadingId);
                 }
 
-                // C. Render Results locally
                 let outputDisplay = `**Python沙盒執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
                 if (resultImages.length > 0) {
                     const imgMd = resultImages.map(img => `\n![Plot](data:${img.type};base64,${img.data})`).join('\n');
@@ -1338,8 +1318,6 @@ async function sendMessage() {
                     outputDisplay += `\n\n**產生的檔案:**${fileHtml}`;
                 }
 
-                // We render the result as a SYSTEM/USER message visually for the user to see the output
-                // But in history, we frame it as User feedback so the model knows what happened.
                 const resultMsgDisplay = `[系統通知] 代碼執行完畢。\n${outputDisplay}`;
                 const userFeedbackMsg = {
                     role: "user",
@@ -1349,17 +1327,15 @@ async function sendMessage() {
                 };
 
                 history.push(userFeedbackMsg);
-                renderMessage("model", "", false, outputDisplay); // Render as model output style for better UX, or distinct style
+                renderMessage("model", "", false, outputDisplay);
 
                 if (currentUser && activeConvId) {
-                    await addMessage(activeConvId, "model", "", outputDisplay); // Save visually as model output
+                    await addMessage(activeConvId, "model", "", outputDisplay);
                 }
 
-                // Continue loop: Send the result back to model to get final explanation
                 continue;
 
             } else {
-                // Text Response (Final Answer) or No Code Found
                 const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
                 history.push(modelMsg);
                 renderMessage("model", responseText, false, responseText, history.length - 1);
@@ -1370,7 +1346,7 @@ async function sendMessage() {
                 }
                 keepGoing = false;
             }
-        } // end while
+        }
 
     } catch (e) {
         removeLoading(loadingId);
@@ -1405,11 +1381,9 @@ inputEl.addEventListener('input', function () {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Init Python Sandbox
     try {
         const module = await import('./pythonSandbox.js');
         pythonSandboxInstance = module.pythonSandbox;
-        // Pre-warm the environment
         pythonSandboxInstance.init().then(() => {
             console.log('Python Sandbox Environment Ready');
         }).catch(err => {

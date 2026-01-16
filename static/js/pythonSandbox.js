@@ -26,7 +26,6 @@ export class PythonSandbox {
 
             const contentType = response.headers.get("Content-Type") || "";
 
-            // 1. Matplotlib Plot (image/png)
             if (contentType.includes("image/png")) {
                 const blob = await response.blob();
                 const base64Data = await this.blobToBase64(blob);
@@ -35,15 +34,12 @@ export class PythonSandbox {
                     logs: "Generated a plot.",
                     images: [{
                         type: "image/png",
-                        data: base64Data, // remove data prefix if main.js adds it? 
-                        // main.js uses: `data:${img.type};base64,${img.data}`
-                        // So I should provide RAW base64 string without prefix.
+                        data: base64Data,
                     }],
                     files: []
                 };
             }
 
-            // 2. File Output (application/octet-stream)
             if (contentType.includes("application/octet-stream")) {
                 const blob = await response.blob();
                 const base64Data = await this.blobToBase64(blob);
@@ -61,7 +57,6 @@ export class PythonSandbox {
                 };
             }
 
-            // 3. Stdout / Log (text/plain)
             const text = await response.text();
             return {
                 output: text,
@@ -79,13 +74,11 @@ export class PythonSandbox {
     terminate() {
     }
 
-    // Helper: Convert Blob to Base64 String (without data URI prefix)
     blobToBase64(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const dataUrl = reader.result;
-                // data:application/octet-stream;base64,.....
                 const base64 = dataUrl.split(',')[1];
                 resolve(base64);
             };
@@ -96,7 +89,6 @@ export class PythonSandbox {
 
     getFilenameFromDisposition(disposition) {
         if (!disposition) return "output.bin";
-        // Content-Disposition: attachment; filename="filename.ext"
         const match = disposition.match(/filename="?([^"]+)"?/);
         if (match && match[1]) {
             return match[1];
