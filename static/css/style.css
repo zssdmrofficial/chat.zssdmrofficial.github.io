@@ -470,14 +470,9 @@ body {
     padding: 24px 0;
     line-height: 1.7;
     font-size: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: none;
     animation: slideInUp 0.4s ease-out backwards;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-}
-
-.message-wrapper:nth-child(even) {
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02) 20%, rgba(255, 255, 255, 0.02) 80%, transparent);
+    background: transparent;
 }
 
 .message-content {
