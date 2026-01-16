@@ -2,11 +2,10 @@
 export class PythonSandbox {
     constructor() {
         this.ready = false;
-        this.workerUrl = "https://zssdmr-python-worker.hf.space/";
+        this.PythonURL = "https://zssdmr-python.hf.space/";
     }
 
     async init() {
-        // No local initialization needed for Cloudflare Worker backend
         this.ready = true;
         return Promise.resolve();
     }
@@ -15,7 +14,7 @@ export class PythonSandbox {
         if (!code) return { logs: "", images: [], files: [] };
 
         try {
-            const response = await fetch(this.workerUrl, {
+            const response = await fetch(this.PythonURL, {
                 method: 'POST',
                 body: code
             });
@@ -78,7 +77,6 @@ export class PythonSandbox {
     }
 
     terminate() {
-        // No-op for remote worker
     }
 
     // Helper: Convert Blob to Base64 String (without data URI prefix)
