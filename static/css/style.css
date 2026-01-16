@@ -1033,6 +1033,62 @@ button#send-button svg {
         display: block;
         animation: fadeIn 0.3s ease;
     }
+
+    /* Python 分析指示器手機版修正 - 防止橫向溢出 */
+    .python-analysis-indicator {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-indicator img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .python-analysis-code {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-code .code-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-code pre {
+        max-width: 100%;
+        overflow-x: auto;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .python-analysis-code code {
+        max-width: 100%;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    /* 確保 text-content 內的所有元素不會溢出 */
+    .text-content {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .text-content img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .text-content .code-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .text-content pre {
+        max-width: 100%;
+        overflow-x: auto;
+    }
 }
 
 .full-bg img {
