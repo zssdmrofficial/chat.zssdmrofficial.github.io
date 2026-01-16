@@ -731,7 +731,7 @@ p code {
 
 .input-container {
     position: absolute;
-    bottom: 0;
+    bottom: -2px;
     left: 0;
     right: 0;
     padding: 24px;
