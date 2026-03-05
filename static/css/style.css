@@ -271,6 +271,7 @@ body {
     border-radius: 0;
     background: transparent;
 }
+
 .user-profile {
     display: flex;
     align-items: center;
@@ -645,6 +646,55 @@ body {
     margin: 8px 8px 8px 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     display: inline-block;
+}
+
+.image-gallery {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 4px;
+    margin: 12px 0;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.image-gallery::-webkit-scrollbar {
+    height: 6px;
+}
+
+.image-gallery::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.image-gallery::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+}
+
+.image-gallery::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.image-gallery img {
+    flex: 0 0 auto;
+    height: auto;
+    max-height: 500px;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    scroll-snap-align: start;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-gallery img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
 .text-content p {
@@ -1083,7 +1133,17 @@ button#send-button svg {
     /* 確保 text-content 內的所有元素不會溢出 */
     .text-content {
         max-width: 100%;
-        overflow: hidden;
+        overflow-y: hidden;
+        overflow-x: hidden;
+    }
+
+    /* Allow image-gallery to scroll horizontally even on mobile */
+    .text-content .image-gallery {
+        overflow-x: auto;
+    }
+
+    .image-gallery img {
+        max-height: 280px;
     }
 
     .text-content img {

@@ -162,6 +162,7 @@ export class PythonSandbox {
                 break;
             }
 
+            const generalFlag = data.getUint16(offset + 6, true);
             const compression = data.getUint16(offset + 8, true);
             const hiddenCompressedSize = data.getUint32(offset + 18, true);
             const fileNameLen = data.getUint16(offset + 26, true);
@@ -169,7 +170,17 @@ export class PythonSandbox {
 
             const fileNameStart = offset + 30;
             const fileNameBytes = bytes.slice(fileNameStart, fileNameStart + fileNameLen);
-            const fileName = new TextDecoder().decode(fileNameBytes);
+            const isUtf8 = (generalFlag & 0x800) !== 0;
+            let fileName;
+            if (isUtf8) {
+                fileName = new TextDecoder('utf-8').decode(fileNameBytes);
+            } else {
+                try {
+                    fileName = new TextDecoder('utf-8', { fatal: true }).decode(fileNameBytes);
+                } catch {
+                    fileName = Array.from(fileNameBytes).map(b => String.fromCharCode(b)).join('');
+                }
+            }
 
             const dataStart = fileNameStart + fileNameLen + extraFieldLen;
             let compressedSize = hiddenCompressedSize;
@@ -255,13 +266,17 @@ export class PythonSandbox {
 
     getFilenameFromDisposition(disposition) {
         if (!disposition) return "output.bin";
-        const starMatch = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+        const starMatch = disposition.match(/filename\*\s*=\s*UTF-8''([^;\s]+)/i);
         if (starMatch && starMatch[1]) {
             try { return decodeURIComponent(starMatch[1]); } catch (e) { }
         }
-        const match = disposition.match(/filename="?([^";]+)"?/);
+        const match = disposition.match(/filename="?([^"\n;]+)"?/i);
         if (match && match[1]) {
-            try { return decodeURIComponent(escape(match[1])); } catch (e) { return match[1]; }
+            const raw = match[1].trim();
+            if (/%[0-9A-Fa-f]{2}/.test(raw)) {
+                try { return decodeURIComponent(raw); } catch (e) { }
+            }
+            try { return decodeURIComponent(escape(raw)); } catch (e) { return raw; }
         }
         return "download_file";
     }

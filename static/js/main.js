@@ -425,6 +425,74 @@ function markdownToHtml(mdText) {
             pre.parentNode.replaceChild(wrapper, pre);
         });
 
+        // Wrap consecutive images in a horizontal scrollable gallery
+        const children = Array.from(div.childNodes);
+        let i = 0;
+        while (i < children.length) {
+            const node = children[i];
+            const isImageNode = (n) => {
+                if (n.nodeType !== 1) return false;
+                if (n.tagName === 'IMG') return true;
+                if (n.tagName === 'P') {
+                    const imgs = n.querySelectorAll('img');
+                    if (imgs.length === 0) return false;
+                    // Check if the <p> only contains images (and whitespace text)
+                    const nonImgContent = Array.from(n.childNodes).filter(
+                        c => !(c.nodeType === 1 && c.tagName === 'IMG') && !(c.nodeType === 3 && c.textContent.trim() === '')
+                    );
+                    return nonImgContent.length === 0;
+                }
+                return false;
+            };
+
+            if (isImageNode(node)) {
+                // Collect consecutive image nodes
+                const imageNodes = [node];
+                let j = i + 1;
+                while (j < children.length) {
+                    const next = children[j];
+                    // Skip whitespace text nodes between images
+                    if (next.nodeType === 3 && next.textContent.trim() === '') {
+                        j++;
+                        continue;
+                    }
+                    if (isImageNode(next)) {
+                        imageNodes.push(next);
+                        j++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (imageNodes.length >= 2) {
+                    const gallery = document.createElement('div');
+                    gallery.className = 'image-gallery';
+                    // Insert gallery before the first image node
+                    node.parentNode.insertBefore(gallery, node);
+                    imageNodes.forEach(imgNode => {
+                        // Extract img elements from <p> wrappers
+                        if (imgNode.tagName === 'P') {
+                            const imgs = imgNode.querySelectorAll('img');
+                            imgs.forEach(img => gallery.appendChild(img));
+                            imgNode.remove();
+                        } else {
+                            gallery.appendChild(imgNode);
+                        }
+                    });
+                    // Also remove whitespace text nodes that were between image nodes
+                    // Refresh children list after DOM manipulation
+                    const newChildren = Array.from(div.childNodes);
+                    i = newChildren.indexOf(gallery) + 1;
+                    children.length = 0;
+                    children.push(...newChildren);
+                } else {
+                    i++;
+                }
+            } else {
+                i++;
+            }
+        }
+
         return div.innerHTML;
     }
 
@@ -1304,8 +1372,8 @@ async function sendMessage() {
 
                 let outputDisplay = `**Python沙盒執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
                 if (resultImages.length > 0) {
-                    const imgMd = resultImages.map(img => `\n![Plot](data:${img.type};base64,${img.data})`).join('\n');
-                    outputDisplay += imgMd;
+                    const imgTags = resultImages.map(img => `<img src="data:${img.type};base64,${img.data}" alt="Plot">`).join('');
+                    outputDisplay += `\n\n<div class="image-gallery">${imgTags}</div>`;
                 }
 
                 if (resultFiles.length > 0) {
