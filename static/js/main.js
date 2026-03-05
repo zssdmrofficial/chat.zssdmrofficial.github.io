@@ -452,7 +452,6 @@ function markdownToHtml(mdText) {
             pre.parentNode.replaceChild(wrapper, pre);
         });
 
-        // Wrap consecutive images in a horizontal scrollable gallery
         const children = Array.from(div.childNodes);
         let i = 0;
         while (i < children.length) {
@@ -463,7 +462,6 @@ function markdownToHtml(mdText) {
                 if (n.tagName === 'P') {
                     const imgs = n.querySelectorAll('img');
                     if (imgs.length === 0) return false;
-                    // Check if the <p> only contains images (and whitespace text)
                     const nonImgContent = Array.from(n.childNodes).filter(
                         c => !(c.nodeType === 1 && c.tagName === 'IMG') && !(c.nodeType === 3 && c.textContent.trim() === '')
                     );
@@ -473,12 +471,10 @@ function markdownToHtml(mdText) {
             };
 
             if (isImageNode(node)) {
-                // Collect consecutive image nodes
                 const imageNodes = [node];
                 let j = i + 1;
                 while (j < children.length) {
                     const next = children[j];
-                    // Skip whitespace text nodes between images
                     if (next.nodeType === 3 && next.textContent.trim() === '') {
                         j++;
                         continue;
@@ -494,10 +490,8 @@ function markdownToHtml(mdText) {
                 if (imageNodes.length >= 2) {
                     const gallery = document.createElement('div');
                     gallery.className = 'image-gallery';
-                    // Insert gallery before the first image node
                     node.parentNode.insertBefore(gallery, node);
                     imageNodes.forEach(imgNode => {
-                        // Extract img elements from <p> wrappers
                         if (imgNode.tagName === 'P') {
                             const imgs = imgNode.querySelectorAll('img');
                             imgs.forEach(img => gallery.appendChild(img));
@@ -506,8 +500,6 @@ function markdownToHtml(mdText) {
                             gallery.appendChild(imgNode);
                         }
                     });
-                    // Also remove whitespace text nodes that were between image nodes
-                    // Refresh children list after DOM manipulation
                     const newChildren = Array.from(div.childNodes);
                     i = newChildren.indexOf(gallery) + 1;
                     children.length = 0;
@@ -1072,7 +1064,6 @@ async function renameConversation(convId, newTitle) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // This will update the conversation list directly with the new title from DB.
         await loadConversations(user.uid);
         setAuthHint('對話已重新命名');
     } catch (e) {
@@ -1184,6 +1175,38 @@ async function updateConversationTitleIfEmpty(convId, text) {
         }
     } catch (e) {
         console.warn('更新標題失敗', e);
+    }
+}
+
+async function generateAndSetConversationTitle(convId, userText, modelText) {
+    if (!convId || !userText || !modelText) return;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const docRef = db.collection('conversations').doc(convId);
+
+        const prompt = `請根據以下對話，總結出一個簡短、精確的對話標題（不超過 15 個字），只回傳標題文字，不要有任何多餘的解釋、引號或標點符號。\n\n用戶：${userText}\n\n模型：${modelText}`;
+        const requestBody = {
+            contents: [{ role: "user", parts: [{ text: prompt }] }]
+        };
+
+        const data = await callApiWithRetry(requestBody, null, 3);
+        const candidate = data?.candidates?.[0];
+        const part = candidate?.content?.parts?.[0];
+
+        if (part && part.text) {
+            let title = part.text.trim();
+            title = title.replace(/^["'「『【*(]+|["'」』】*)]+$/g, '').trim();
+            if (title) {
+                await docRef.update({
+                    title: title,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('自動生成標題失敗', e);
     }
 }
 
@@ -1353,6 +1376,8 @@ async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text) return;
 
+    const isFirstMessageTurn = history.length === 0;
+
     const toolContext = buildToolContextPayload();
     const composedText = toolContext
         ? `【工具資訊】\n${toolContext}\n\n【使用者提問】\n${text}`
@@ -1519,10 +1544,16 @@ async function sendMessage() {
             } else {
                 const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
                 history.push(modelMsg);
+                removeLoading(loadingId);
                 renderMessage("model", responseText, false, responseText, history.length - 1);
 
                 if (currentUser && activeConvId) {
                     await addMessage(activeConvId, "model", responseText, responseText);
+
+                    if (isFirstMessageTurn) {
+                        await generateAndSetConversationTitle(activeConvId, text, responseText);
+                    }
+
                     await loadConversations(currentUser.uid);
                 }
                 keepGoing = false;
