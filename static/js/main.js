@@ -806,6 +806,59 @@ function renderConversationList(conversations) {
         const actions = document.createElement('div');
         actions.className = 'history-actions';
 
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'edit-conv-btn';
+        editBtn.title = '重新命名此對話';
+        editBtn.innerHTML = `
+            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="14" width="14" xmlns="http://www.w3.org/2000/svg"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="m15 5 4 4"/></svg>
+        `;
+        editBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (item.contains(title)) {
+                const currentTitle = conv.title || '未命名對話';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentTitle;
+                input.className = 'history-title-input';
+
+                item.replaceChild(input, title);
+                input.focus();
+
+                let isSaving = false;
+                const saveRename = async () => {
+                    if (isSaving) return;
+                    isSaving = true;
+                    const newTitle = input.value.trim();
+                    if (item.contains(input)) {
+                        item.replaceChild(title, input);
+                    }
+                    if (newTitle && newTitle !== currentTitle) {
+                        title.textContent = newTitle;
+                        await renameConversation(conv.id, newTitle);
+                    } else {
+                        title.textContent = currentTitle;
+                    }
+                };
+
+                input.addEventListener('click', e => e.stopPropagation());
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveRename();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (item.contains(input)) {
+                            item.replaceChild(title, input);
+                        }
+                    }
+                });
+                input.addEventListener('blur', () => {
+                    saveRename();
+                });
+            }
+        });
+
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'delete-conv-btn';
@@ -818,6 +871,7 @@ function renderConversationList(conversations) {
             deleteConversation(conv.id);
         });
 
+        actions.appendChild(editBtn);
         actions.appendChild(deleteBtn);
 
         item.appendChild(title);
@@ -992,6 +1046,38 @@ async function addMessage(convId, role, content, displayContent = null) {
     } catch (e) {
         console.error('寫入訊息失敗', e);
         return null;
+    }
+}
+
+async function renameConversation(convId, newTitle) {
+    if (!convId || !newTitle || newTitle.trim() === '') return;
+    const user = auth.currentUser;
+    if (!user) {
+        setAuthHint('請先登入再重新命名對話', true);
+        return;
+    }
+
+    try {
+        const docRef = db.collection('conversations').doc(convId);
+        const docSnap = await docRef.get();
+        const data = docSnap.data();
+
+        if (!docSnap.exists || data?.userId !== user.uid) {
+            setAuthHint('無法重新命名此對話', true);
+            return;
+        }
+
+        await docRef.update({
+            title: newTitle.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // This will update the conversation list directly with the new title from DB.
+        await loadConversations(user.uid);
+        setAuthHint('對話已重新命名');
+    } catch (e) {
+        console.error('重新命名對話失敗', e);
+        setAuthHint('重新命名對話失敗，請稍後再試', true);
     }
 }
 

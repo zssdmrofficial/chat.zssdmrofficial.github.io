@@ -162,13 +162,30 @@ body {
     text-overflow: ellipsis;
 }
 
+.history-title-input {
+    flex: 1;
+    background: transparent;
+    color: var(--text-primary);
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+}
+
+.history-title-input:focus {
+    box-shadow: none;
+}
+
 .history-actions {
     display: flex;
     gap: 6px;
     align-items: center;
 }
 
-.delete-conv-btn {
+.delete-conv-btn,
+.edit-conv-btn {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -181,7 +198,8 @@ body {
     transition: all 0.2s ease;
 }
 
-.delete-conv-btn:hover {
+.delete-conv-btn:hover,
+.edit-conv-btn:hover {
     color: var(--accent-strong);
     background: rgba(255, 255, 255, 0.08);
 }
