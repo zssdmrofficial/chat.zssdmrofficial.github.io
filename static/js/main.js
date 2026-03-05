@@ -356,9 +356,11 @@ function updateUserProfile(user) {
     if (!userNameEl || !userAvatarEl) return;
     if (user) {
         userNameEl.textContent = user.email || 'User';
+        userNameEl.title = user.email || 'User';
         userAvatarEl.textContent = (user.email || 'U').slice(0, 1).toUpperCase();
     } else {
         userNameEl.textContent = 'Guest';
+        userNameEl.title = 'Guest';
         userAvatarEl.textContent = 'G';
     }
 }
