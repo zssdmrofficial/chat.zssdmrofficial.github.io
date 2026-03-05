@@ -233,6 +233,15 @@ function updateSendButtonState() {
     if (sendButtonEl.innerHTML.trim() !== iconMarkup.trim()) {
         sendButtonEl.innerHTML = iconMarkup;
     }
+    adjustChatPadding();
+}
+
+function adjustChatPadding() {
+    const inputContainer = document.querySelector('.input-container');
+    if (chatBoxEl && inputContainer) {
+        const h = inputContainer.offsetHeight;
+        chatBoxEl.style.paddingBottom = (h + 20) + 'px';
+    }
 }
 
 function isConversationActionLocked() {
@@ -1446,6 +1455,7 @@ inputEl.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
     updateSendButtonState();
+    adjustChatPadding();
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
