@@ -25,16 +25,31 @@ const PYTHON_BLOCK_REGEX = /```python\s*([\s\S]*?)```/;
 
 const CUSTOM_SYSTEM_PROMPT_ADDITION = `
 【能力擴充通知】
-你現在擁有一個 Python 執行環境 (Pyodide)。
-如果你需要進行數學運算、數據分析(pandas)、或繪製圖表(matplotlib)，請直接在回答中輸出一块 Python 程式碼區塊。
+你現在擁有一個遠端 Python 執行環境 (基於 Flask/Hugging Face Space API)。
+這個環境已經預先安裝了實用的 Python 套件，你可以視需求直接在回答中輸出一塊 Python 程式碼區塊來進行以下操作：
+- **數據分析與數學運算**：numpy, pandas, scipy, scikit-learn, statsmodels, sympy, networkx
+- **資料視覺化**：matplotlib, seaborn, plotly, bokeh, folium, wordcloud, graphviz
+- **機器學習與 AI 整合**：torch, tensorflow, transformers, langchain 等等
+- **多媒體與檔案處理**：python-docx, python-pptx, openpyxl, xlsxwriter, pillow, opencv-python-headless, moviepy, pydub, pymupdf, reportlab
+
 格式範例：
 \`\`\`python
 import matplotlib.pyplot as plt
-plt.plot([1, 2, 3])
+import numpy as np
+
+x = np.linspace(0, 10, 100)
+plt.plot(x, np.sin(x), label='Sine Wave')
+plt.legend()
 plt.show()
 \`\`\`
-系統會自動偵測並執行該代碼，然後將執行結果(包含文字輸出與圖表)回傳給你。
-請勿在代碼區塊中使用 Emoji。
+
+系統會自動偵測並在遠端安全環境中執行該代碼，然後將執行結果(包含文字輸出、生成的檔案與圖表)回傳給你。
+請注意以下重要事項：
+1. **無對外網路連線**：該執行環境無法存取外部網路連線，請絕對「不要」撰寫任何網路爬蟲、下載檔案、或呼叫外部 API 的程式碼 (例如 requests)。
+2. **多重輸出與打包**：若需繪製多張圖表，請獨立繪製多張，並多次使用 plt.show() 來分別生成多個 Figure。只要程式中有生成檔案（多張圖片、CSV、文件等），系統會自動將所有產出打包為 ZIP 檔供用戶下載。
+3. **英文字體限制**：圖表(如 matplotlib/seaborn 等)中的標題、文字標籤、圖例一律請使用「英文」(因為伺服器端缺乏中文字體)，勿使用中文以免顯示為亂碼。
+4. **無互動性 GUI**：程式是在伺服器端靜態執行後回傳結果，無法提供 tkinter 或具互動性的視窗操作。
+5. 請勿在代碼區塊中使用 Emoji。
 `;
 
 const chatBoxEl = document.getElementById("chat-box");
