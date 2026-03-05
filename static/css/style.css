@@ -298,6 +298,7 @@ body {
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.2s ease;
+    overflow: hidden;
 }
 
 .user-profile:hover {
@@ -394,6 +395,7 @@ body {
 .avatar {
     width: 28px;
     height: 28px;
+    flex-shrink: 0;
     background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 60%, transparent));
     border-radius: 8px;
     display: flex;
@@ -409,6 +411,10 @@ body {
     font-size: 14px;
     font-weight: 600;
     color: var(--accent-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .chat-interface {
