@@ -21,19 +21,19 @@ let isAwaitingResponse = false;
 let isEditingMessage = false;
 let pythonSandboxInstance = null;
 
-const PYTHON_BLOCK_REGEX = /```python\s*([\s\S]*?)```/;
+const PYTHON_BLOCK_REGEX = /```execute-python\s*([\s\S]*?)```/;
 
 const CUSTOM_SYSTEM_PROMPT_ADDITION = `
 【能力擴充通知】
 你現在擁有一個遠端 Python 執行環境 (基於 Flask/Hugging Face Space API)。
-這個環境已經預先安裝了實用的 Python 套件，你可以視需求直接在回答中輸出一塊 Python 程式碼區塊來進行以下操作：
+這個環境已經預先安裝了實用的 Python 套件，你可以視需求直接在回答中輸出一塊標頭為 \`execute-python\` 的程式碼區塊來進行以下操作：
 - **數據分析與數學運算**：numpy, pandas, scipy, scikit-learn, statsmodels, sympy, networkx
 - **資料視覺化**：matplotlib, seaborn, plotly, bokeh, folium, wordcloud, graphviz
 - **機器學習與 AI 整合**：torch, tensorflow, transformers, langchain 等等
 - **多媒體與檔案處理**：python-docx, python-pptx, openpyxl, xlsxwriter, pillow, opencv-python-headless, moviepy, pydub, pymupdf, reportlab
 
 格式範例：
-\`\`\`python
+\`\`\`execute-python
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -52,6 +52,7 @@ plt.show()
 5. **最高指令優先**：如果用戶針對程式碼的撰寫方式或執行有「明確的指示(prompt)」或是「提供了特定程式碼請你執行」，請一律以「完全遵守用戶的指令與程式碼」為最高優先。
 6. **嚴格禁止擅自加料**：作為「思想小助手」，你的「熱情」與「厚道」應體現於「精確、絕對忠實地執行指令與代碼」，絕對禁止基於好意或為了美觀而擅自修改、加入任何網格、顏色、標題或是額外的裝飾性程式碼。用戶給什麼程式碼就執行什麼，沒有要求的美化指令就一律不加。
 7. 請勿在代碼區塊中使用 Emoji。
+8. **執行判斷準則**：除非使用者特別強調執行的語氣（例如：「幫我執行」、「跑一下這段程式」），或是明確要求完成某項可透過該環境達成的任務（例如：「幫我畫出函數圖」、「分析這段數據」），否則不需要特別呼叫 \`execute-python\` 執行環境。如果只是單純請你撰寫範例程式碼供參考，請使用標準的 \`python\` 程式碼塊即可。
 `;
 
 const chatBoxEl = document.getElementById("chat-box");
