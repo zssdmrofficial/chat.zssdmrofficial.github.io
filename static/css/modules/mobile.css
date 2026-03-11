@@ -1,0 +1,120 @@
+.mobile-backdrop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 85%;
+        max-width: 320px;
+        display: none;
+        z-index: 200;
+        background-color: var(--sidebar-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5);
+        border-right: 1px solid var(--glass-border);
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .message-content,
+    .message-footer,
+    .input-wrapper {
+        padding: 0 16px;
+    }
+
+    .input-wrapper {
+        padding: 9px 16px;
+        min-height: 36px;
+    }
+
+    .prompt-tools-block {
+        padding: 8px 0 0;
+    }
+
+    body.sidebar-open .sidebar {
+        display: flex;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .mobile-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: transparent;
+        backdrop-filter: none;
+        z-index: 150;
+    }
+
+    body.sidebar-open .mobile-backdrop {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .python-analysis-indicator {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-indicator img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .python-analysis-code {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-code .code-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .python-analysis-code pre {
+        max-width: 100%;
+        overflow-x: auto;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .python-analysis-code code {
+        max-width: 100%;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .text-content {
+        max-width: 100%;
+        overflow-y: hidden;
+        overflow-x: hidden;
+    }
+
+    .text-content .image-gallery {
+        overflow-x: auto;
+    }
+
+    .image-gallery img {
+        max-height: 280px;
+    }
+
+    .text-content img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .text-content .code-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .text-content pre {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}
