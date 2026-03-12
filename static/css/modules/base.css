@@ -30,7 +30,8 @@ body {
     font-family: "Noto Sans TC", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: transparent;
     color: var(--text-primary);
-    height: 100vh;
+    height: 100vh; /* Fallback for browsers that do not support dvh */
+    height: 100dvh;
     overflow: hidden;
     animation: fadeIn 1s ease-out;
 }
