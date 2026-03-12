@@ -112,6 +112,10 @@ async function deleteAllConversations() {
 }
 
 function showSettingsModal() {
+    if (!currentUser && (!window.auth || !auth.currentUser)) {
+        return;
+    }
+
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
 
