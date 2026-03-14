@@ -65,6 +65,20 @@
         overflow: hidden;
     }
 
+    .python-analysis-header {
+        flex-wrap: wrap;
+        row-gap: 6px;
+        min-width: 0;
+    }
+
+    .python-analysis-header .status-text {
+        min-width: 0;
+        flex: 1 1 auto;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
     .python-analysis-indicator img {
         max-width: 100%;
         height: auto;
@@ -86,12 +100,16 @@
         overflow-x: auto;
         word-wrap: break-word;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .python-analysis-code code {
         max-width: 100%;
         word-wrap: break-word;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .text-content {
@@ -121,5 +139,20 @@
     .text-content pre {
         max-width: 100%;
         overflow-x: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .text-content code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .code-header {
+        flex-wrap: wrap;
+        row-gap: 6px;
+        min-width: 0;
     }
 }
