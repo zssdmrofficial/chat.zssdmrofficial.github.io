@@ -95,7 +95,8 @@ function buildToolContextPayload() {
 function updateSendButtonState() {
     if (!sendButtonEl || !inputEl) return;
     const hasText = inputEl.value.trim() !== '';
-    sendButtonEl.disabled = isAwaitingResponse || !hasText;
+    // Allow the button to be enabled when awaiting response so it can act as a stop button
+    sendButtonEl.disabled = !isAwaitingResponse && !hasText;
     sendButtonEl.setAttribute('aria-busy', isAwaitingResponse.toString());
     const iconMarkup = isAwaitingResponse ? SEND_ICON_PENDING : SEND_ICON_DEFAULT;
     if (sendButtonEl.innerHTML.trim() !== iconMarkup.trim()) {
@@ -166,6 +167,13 @@ function updateEditButtonsState() {
     });
     const regenButtons = document.querySelectorAll('.regenerate-message-btn');
     regenButtons.forEach((btn) => {
+        if (!btn) return;
+        btn.disabled = shouldDisable;
+        btn.setAttribute('aria-disabled', shouldDisable.toString());
+        btn.classList.toggle('disabled', shouldDisable);
+    });
+    const copyButtons = document.querySelectorAll('.copy-message-btn');
+    copyButtons.forEach((btn) => {
         if (!btn) return;
         btn.disabled = shouldDisable;
         btn.setAttribute('aria-disabled', shouldDisable.toString());

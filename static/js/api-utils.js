@@ -89,7 +89,7 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
     throw new Error("已達最大重試次數仍失敗");
 }
 
-async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5) {
+async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, signal = null) {
     let attempt = 0;
     while (attempt < maxRetries) {
         attempt++;
@@ -103,6 +103,7 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5) 
                     "x-use-stream": "true"
                 },
                 body: JSON.stringify(body),
+                signal: signal
             });
 
             if (res.status === 503) continue;

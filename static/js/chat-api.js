@@ -1,6 +1,20 @@
+async function stopGeneration() {
+    if (abortController) {
+        abortController.abort();
+        abortController = null;
+        isAwaitingResponse = false;
+        updateSendButtonState();
+        updateConversationLockUI();
+    }
+}
+
 async function regenerateMessage(modelMessageIndex) {
-    if (isAwaitingResponse) return;
+    if (isAwaitingResponse) {
+        await stopGeneration();
+        return;
+    }
     if (modelMessageIndex < 0 || modelMessageIndex >= history.length) return;
+    // ...
 
     const modelMsg = history[modelMessageIndex];
     if (!modelMsg || modelMsg.role !== 'model') return;
@@ -39,6 +53,7 @@ async function regenerateMessage(modelMessageIndex) {
     }
 
     isAwaitingResponse = true;
+    abortController = new AbortController();
     updateSendButtonState();
     updateConversationLockUI();
 
@@ -78,37 +93,52 @@ async function regenerateMessage(modelMessageIndex) {
             let streamMsgDiv = null;
             let textContentEl = null;
 
-            await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
-                const el = document.getElementById(loadingId);
-                if (el) el.remove();
+            try {
+                await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
+                    const el = document.getElementById(loadingId);
+                    if (el) el.remove();
 
-                if (!streamMsgDiv) {
-                    streamMsgDiv = document.createElement('div');
-                    streamMsgDiv.className = 'message-wrapper';
-                    streamMsgDiv.dataset.role = 'model';
-                    streamMsgDiv.innerHTML = `
-                        <div class="message-content">
-                            <div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>
-                            <div class="text-content"></div>
-                        </div>
-                    `;
-                    textContentEl = streamMsgDiv.querySelector('.text-content');
-                    chatBoxEl.appendChild(streamMsgDiv);
-                }
-
-                currentResponseText += textChunk;
-                if (!hasEncounteredPython) {
-                    let markerIdx = currentResponseText.indexOf("\`\`\`execute");
-                    if (markerIdx !== -1) {
-                        hasEncounteredPython = true;
-                        beforePythonText = currentResponseText.substring(0, markerIdx).trim();
-                        textContentEl.innerHTML = markdownToHtml(beforePythonText);
-                    } else {
-                        textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                    if (!streamMsgDiv) {
+                        streamMsgDiv = document.createElement('div');
+                        streamMsgDiv.className = 'message-wrapper';
+                        streamMsgDiv.dataset.role = 'model';
+                        streamMsgDiv.innerHTML = `
+                            <div class="message-content">
+                                <div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>
+                                <div class="text-content"></div>
+                            </div>
+                        `;
+                        textContentEl = streamMsgDiv.querySelector('.text-content');
+                        chatBoxEl.appendChild(streamMsgDiv);
                     }
-                    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+
+                    currentResponseText += textChunk;
+                    if (!hasEncounteredPython) {
+                        let markerIdx = currentResponseText.indexOf("\`\`\`execute");
+                        if (markerIdx !== -1) {
+                            hasEncounteredPython = true;
+                            beforePythonText = currentResponseText.substring(0, markerIdx).trim();
+                            textContentEl.innerHTML = markdownToHtml(beforePythonText);
+                        } else {
+                            textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                        }
+                        chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+                    }
+                }, API_MAX_RETRY_LOOPS, abortController.signal);
+            } catch (streamErr) {
+                if (streamErr.name === 'AbortError') {
+                    console.log("[API Stream] 串流已由使用者暫停");
+                    if (streamMsgDiv) streamMsgDiv.remove();
+                    if (!currentResponseText) {
+                        removeLoading(loadingId);
+                        return;
+                    }
+                    // Continue with what we have
+                    keepGoing = false;
+                } else {
+                    throw streamErr;
                 }
-            });
+            }
 
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
@@ -265,7 +295,10 @@ async function regenerateMessage(modelMessageIndex) {
 }
 
 async function sendMessage() {
-    if (isAwaitingResponse) return;
+    if (isAwaitingResponse) {
+        await stopGeneration();
+        return;
+    }
 
     const text = inputEl.value.trim();
     if (!text) return;
@@ -289,6 +322,7 @@ async function sendMessage() {
     }
 
     isAwaitingResponse = true;
+    abortController = new AbortController();
     inputEl.value = "";
     inputEl.style.height = 'auto';
     updateSendButtonState();
@@ -341,37 +375,52 @@ async function sendMessage() {
             let streamMsgDiv = null;
             let textContentEl = null;
 
-            await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
-                const el = document.getElementById(loadingId);
-                if (el) el.remove();
+            try {
+                await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
+                    const el = document.getElementById(loadingId);
+                    if (el) el.remove();
 
-                if (!streamMsgDiv) {
-                    streamMsgDiv = document.createElement('div');
-                    streamMsgDiv.className = 'message-wrapper';
-                    streamMsgDiv.dataset.role = 'model';
-                    streamMsgDiv.innerHTML = `
-                        <div class="message-content">
-                            <div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>
-                            <div class="text-content"></div>
-                        </div>
-                    `;
-                    textContentEl = streamMsgDiv.querySelector('.text-content');
-                    chatBoxEl.appendChild(streamMsgDiv);
-                }
-
-                currentResponseText += textChunk;
-                if (!hasEncounteredPython) {
-                    let markerIdx = currentResponseText.indexOf("\`\`\`execute");
-                    if (markerIdx !== -1) {
-                        hasEncounteredPython = true;
-                        beforePythonText = currentResponseText.substring(0, markerIdx).trim();
-                        textContentEl.innerHTML = markdownToHtml(beforePythonText);
-                    } else {
-                        textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                    if (!streamMsgDiv) {
+                        streamMsgDiv = document.createElement('div');
+                        streamMsgDiv.className = 'message-wrapper';
+                        streamMsgDiv.dataset.role = 'model';
+                        streamMsgDiv.innerHTML = `
+                            <div class="message-content">
+                                <div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>
+                                <div class="text-content"></div>
+                            </div>
+                        `;
+                        textContentEl = streamMsgDiv.querySelector('.text-content');
+                        chatBoxEl.appendChild(streamMsgDiv);
                     }
-                    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+
+                    currentResponseText += textChunk;
+                    if (!hasEncounteredPython) {
+                        let markerIdx = currentResponseText.indexOf("\`\`\`execute");
+                        if (markerIdx !== -1) {
+                            hasEncounteredPython = true;
+                            beforePythonText = currentResponseText.substring(0, markerIdx).trim();
+                            textContentEl.innerHTML = markdownToHtml(beforePythonText);
+                        } else {
+                            textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                        }
+                        chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+                    }
+                }, API_MAX_RETRY_LOOPS, abortController.signal);
+            } catch (streamErr) {
+                if (streamErr.name === 'AbortError') {
+                    console.log("[API Stream] 串流已由使用者暫停");
+                    if (streamMsgDiv) streamMsgDiv.remove();
+                    if (!currentResponseText) {
+                        removeLoading(loadingId);
+                        return;
+                    }
+                    // Continue with what we have
+                    keepGoing = false;
+                } else {
+                    throw streamErr;
                 }
-            });
+            }
 
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;

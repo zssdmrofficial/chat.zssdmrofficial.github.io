@@ -7,4 +7,5 @@ let isEditingMessage = false;
 let pythonExecutorInstance = null;
 let isPythonEnabled = true;
 let animatingConversationId = null;
+let abortController = null;
 
