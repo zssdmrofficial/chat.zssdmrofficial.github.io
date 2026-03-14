@@ -62,6 +62,7 @@ async function regenerateMessage(modelMessageIndex) {
     try {
         let keepGoing = true;
         let loopCount = 0;
+        let isAborted = false;
 
         while (keepGoing && loopCount < API_MAX_RETRY_LOOPS) {
             loopCount++;
@@ -135,6 +136,7 @@ async function regenerateMessage(modelMessageIndex) {
                     }
                     // Continue with what we have
                     keepGoing = false;
+                    isAborted = true;
                 } else {
                     throw streamErr;
                 }
@@ -143,7 +145,8 @@ async function regenerateMessage(modelMessageIndex) {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            const isValidPython = match && pythonExecutorInstance;
+            // If user aborted (keepGoing is false), do NOT treat it as a valid python execution to prevent delay
+            const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
                 if (beforePythonText) {
@@ -160,7 +163,7 @@ async function regenerateMessage(modelMessageIndex) {
                     if (currentUser && activeConvId) {
                         const beforeMsgId = await addMessage(activeConvId, "model", beforePythonText, beforePythonText);
                         textBeforeMsg.messageId = beforeMsgId;
-                        if (isFirstPair) {
+                        if (isFirstPair && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, userText, beforePythonText);
                         }
                     }
@@ -268,7 +271,7 @@ async function regenerateMessage(modelMessageIndex) {
                     const msgId = await addMessage(activeConvId, "model", responseText, responseText);
                     newModelMsg.messageId = msgId;
 
-                    if (isFirstPair) {
+                    if (isFirstPair && !isAborted) {
                         await generateAndSetConversationTitle(activeConvId, userText, responseText);
                     }
 
@@ -343,6 +346,7 @@ async function sendMessage() {
 
         let keepGoing = true;
         let loopCount = 0;
+        let isAborted = false;
 
         while (keepGoing && loopCount < API_MAX_RETRY_LOOPS) {
             loopCount++;
@@ -417,6 +421,7 @@ async function sendMessage() {
                     }
                     // Continue with what we have
                     keepGoing = false;
+                    isAborted = true;
                 } else {
                     throw streamErr;
                 }
@@ -425,7 +430,8 @@ async function sendMessage() {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            const isValidPython = match && pythonExecutorInstance;
+            // If user aborted (keepGoing is false), do NOT treat it as a valid python execution to prevent delay
+            const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
                 if (beforePythonText) {
@@ -442,7 +448,7 @@ async function sendMessage() {
                     if (currentUser && activeConvId) {
                         const beforeMsgId = await addMessage(activeConvId, "model", beforePythonText, beforePythonText);
                         textBeforeMsg.messageId = beforeMsgId;
-                        if (isFirstMessageTurn) {
+                        if (isFirstMessageTurn && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, text, beforePythonText);
                         }
                     }
@@ -552,7 +558,7 @@ async function sendMessage() {
                 if (currentUser && activeConvId) {
                     await addMessage(activeConvId, "model", responseText, responseText);
 
-                    if (isFirstMessageTurn) {
+                    if (isFirstMessageTurn && !isAborted) {
                         await generateAndSetConversationTitle(activeConvId, text, responseText);
                     }
 
@@ -560,6 +566,7 @@ async function sendMessage() {
                 }
                 keepGoing = false;
             }
+
         }
 
     } catch (e) {

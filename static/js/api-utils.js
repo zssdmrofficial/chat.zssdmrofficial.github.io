@@ -78,6 +78,7 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
             return await res.json();
 
         } catch (e) {
+            if (e.name === 'AbortError') throw e;
             console.error(`[API] 呼叫失敗 (第 ${attempt} 次):`, e);
             if (e.message && (e.message.startsWith("HTTP 400") || e.message.includes("Function calling is not enabled"))) {
                 throw e;
@@ -165,8 +166,9 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
             return;
 
         } catch (e) {
+            if (e.name === 'AbortError') throw e;
             console.error(`[API Stream] 呼叫失敗 (第 ${attempt} 次):`, e);
-            if (e.message && (e.message.startsWith("HTTP 400") || e.message.includes("Function calling is not enabled"))) {
+            if (e.message && (e.message.startsWith("HTTP 400") || e.message.includes("Function calling with streaming is not supported by this proxy") || e.message.includes("Function calling is not enabled"))) {
                 throw e;
             }
             if (attempt >= maxRetries) throw e;
