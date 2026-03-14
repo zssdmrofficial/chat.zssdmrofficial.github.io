@@ -1,7 +1,7 @@
 .python-analysis-indicator {
     display: flex;
     flex-direction: column;
-    margin: 12px 0;
+    margin: 0 0 16px 0;
     border-radius: 14px;
     background: rgba(43, 43, 43, 0.4);
     border: 1px solid var(--glass-border);
@@ -13,10 +13,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 18px;
+    padding: 8px 18px;
     cursor: pointer;
     user-select: none;
     transition: background 0.2s;
+    min-height: 44px;
 }
 
 .python-analysis-header:hover {
@@ -30,17 +31,30 @@
     font-size: 14px;
     color: var(--text-secondary);
     font-weight: 500;
+    line-height: 1;
+    height: 28px;
+}
+
+.python-analysis-header .status-text span {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
 }
 
 .python-analysis-header .status-text svg {
     color: var(--accent-color);
     filter: drop-shadow(0 0 5px var(--accent-glow));
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
 }
 
 .python-analysis-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    height: 28px;
+    /* Match copy button height */
 }
 
 .python-analysis-header .status-icon {
@@ -51,6 +65,7 @@
     justify-content: center;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-secondary);
+    flex-shrink: 0;
 }
 
 .python-analysis-indicator.expanded .status-icon {
@@ -205,6 +220,10 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.message-content:has(.python-analysis-indicator) .role-icon {
+    margin-top: 6px;
 }
 
 .icon-user {
@@ -452,6 +471,7 @@
 }
 
 @keyframes bounce {
+
     0%,
     80%,
     100% {
@@ -466,6 +486,7 @@
 }
 
 @keyframes shake {
+
     0%,
     100% {
         transform: translateX(0);
