@@ -3,7 +3,9 @@ sendButtonEl.addEventListener("click", sendMessage);
 inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        if (!isAwaitingResponse) {
+            sendMessage();
+        }
     }
 });
 
