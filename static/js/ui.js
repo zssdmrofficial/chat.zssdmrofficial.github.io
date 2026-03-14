@@ -95,7 +95,6 @@ function buildToolContextPayload() {
 function updateSendButtonState() {
     if (!sendButtonEl || !inputEl) return;
     const hasText = inputEl.value.trim() !== '';
-    // Allow the button to be enabled when awaiting response so it can act as a stop button
     sendButtonEl.disabled = !isAwaitingResponse && !hasText;
     sendButtonEl.setAttribute('aria-busy', isAwaitingResponse.toString());
     const iconMarkup = isAwaitingResponse ? SEND_ICON_PENDING : SEND_ICON_DEFAULT;

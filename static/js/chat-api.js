@@ -14,8 +14,6 @@ async function regenerateMessage(modelMessageIndex) {
         return;
     }
     if (modelMessageIndex < 0 || modelMessageIndex >= history.length) return;
-    // ...
-
     const modelMsg = history[modelMessageIndex];
     if (!modelMsg || modelMsg.role !== 'model') return;
 
@@ -134,7 +132,7 @@ async function regenerateMessage(modelMessageIndex) {
                         removeLoading(loadingId);
                         return;
                     }
-                    // Continue with what we have
+                    
                     keepGoing = false;
                     isAborted = true;
                 } else {
@@ -145,7 +143,7 @@ async function regenerateMessage(modelMessageIndex) {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            // If user aborted (keepGoing is false), do NOT treat it as a valid python execution to prevent delay
+            
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
@@ -251,7 +249,7 @@ async function regenerateMessage(modelMessageIndex) {
                     messageId: null
                 };
                 history.push(userFeedbackMsg);
-                renderMessage("model", "", false, outputDisplay, history.length - 1, false, true);
+                renderMessage("model", "", false, outputDisplay, history.length - 1, false, true, false, true);
 
                 if (currentUser && activeConvId) {
                     const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay);
@@ -419,7 +417,7 @@ async function sendMessage() {
                         removeLoading(loadingId);
                         return;
                     }
-                    // Continue with what we have
+                    
                     keepGoing = false;
                     isAborted = true;
                 } else {
@@ -430,7 +428,7 @@ async function sendMessage() {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            // If user aborted (keepGoing is false), do NOT treat it as a valid python execution to prevent delay
+            
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
@@ -539,7 +537,7 @@ async function sendMessage() {
                 };
 
                 history.push(userFeedbackMsg);
-                renderMessage("model", "", false, outputDisplay, history.length - 1, false, true);
+                renderMessage("model", "", false, outputDisplay, history.length - 1, false, true, false, true);
 
                 if (currentUser && activeConvId) {
                     const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay);

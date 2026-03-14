@@ -115,6 +115,7 @@
     padding: 0 24px;
     display: flex;
     gap: 20px;
+    align-items: flex-start;
 }
 
 .message-footer {
@@ -235,6 +236,7 @@
     background: var(--accent-strong);
     color: #1a1a1a;
     box-shadow: 0 0 10px var(--accent-glow);
+    margin-top: calc((1.7em - 32px) / 2);
 }
 
 .text-content {

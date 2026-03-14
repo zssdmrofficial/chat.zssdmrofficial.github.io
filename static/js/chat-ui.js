@@ -33,7 +33,7 @@ function scheduleBubbleShapeRefresh() {
 
 window.addEventListener('resize', scheduleBubbleShapeRefresh);
 
-function renderMessage(role, content, isError = false, displayContent = null, messageIndex = null, isHtml = false, hideActions = false, hideRegen = false) {
+function renderMessage(role, content, isError = false, displayContent = null, messageIndex = null, isHtml = false, hideActions = false, hideRegen = false, hideIcon = false) {
     const isUser = role === "user";
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message-wrapper';
@@ -61,7 +61,7 @@ function renderMessage(role, content, isError = false, displayContent = null, me
 
     const iconHtml = isUser
         ? ''
-        : `<div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>`;
+        : (hideIcon ? '<div class="role-icon" style="visibility: hidden; box-shadow: none;"></div>' : `<div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>`);
 
     const editButtonDisabledAttr = isAwaitingResponse ? ' disabled aria-disabled="true"' : ' aria-disabled="false"';
     const editButtonHtml = isUser
@@ -283,7 +283,7 @@ function renderHistory() {
             }
         }
 
-        renderMessage(renderRole, renderText, false, msg.displayText, index, isHtml, shouldHideActions, hideRegen);
+        renderMessage(renderRole, renderText, false, msg.displayText, index, isHtml, shouldHideActions, hideRegen, isPythonResult);
     });
 }
 
