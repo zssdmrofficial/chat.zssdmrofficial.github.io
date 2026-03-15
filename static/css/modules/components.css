@@ -49,15 +49,15 @@
 }
 
 .custom-modal::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
-    background-image: url('../../images/background.png');
+    background-image: url('/static/images/background.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     filter: brightness(60%) grayscale(18%) blur(2px);
-    z-index: -2;
+    z-index: -1;
 }
 
 .custom-modal-message {
