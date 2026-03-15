@@ -128,6 +128,21 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
             const decoder = new TextDecoder("utf-8");
             let buffer = "";
 
+            const processStreamData = (dataStr) => {
+                if (!dataStr || dataStr === '[DONE]') return;
+                try {
+                    let data = JSON.parse(dataStr);
+                    let parts = data?.candidates?.[0]?.content?.parts;
+                    if (parts && Array.isArray(parts)) {
+                        for (const part of parts) {
+                            if (part.text) {
+                                onChunk({ text: part.text, isThought: !!part.thought });
+                            }
+                        }
+                    }
+                } catch (e) { }
+            };
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
@@ -135,13 +150,7 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
                         let lines = buffer.split('\n');
                         for (let line of lines) {
                             let dataStr = line.replace(/^data:\s*/, '').trim();
-                            if (dataStr && dataStr !== '[DONE]') {
-                                try {
-                                    let data = JSON.parse(dataStr);
-                                    let textChunk = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                                    if (textChunk) onChunk(textChunk);
-                                } catch (e) { }
-                            }
+                            processStreamData(dataStr);
                         }
                     }
                     break;
@@ -152,15 +161,7 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
 
                 for (let line of lines) {
                     let dataStr = line.replace(/^data:\s*/, '').trim();
-                    if (dataStr === '[DONE]') continue;
-                    if (!dataStr) continue;
-                    try {
-                        let data = JSON.parse(dataStr);
-                        let textChunk = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (textChunk) {
-                            onChunk(textChunk);
-                        }
-                    } catch (e) { }
+                    processStreamData(dataStr);
                 }
             }
             return;

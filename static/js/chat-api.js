@@ -85,15 +85,29 @@ async function regenerateMessage(modelMessageIndex) {
             ];
 
             const requestBody = { contents: payloadHistory };
+            if (isThinkingEnabled && currentThinkingLevel) {
+                requestBody.generationConfig = {
+                    thinkingConfig: {
+                        thinkingLevel: currentThinkingLevel,
+                        includeThoughts: true
+                    }
+                };
+                requestBody.model = THINKING_MODEL;
+            }
             let currentResponseText = "";
+            let currentThoughtText = "";
             let beforePythonText = "";
             let hasEncounteredPython = false;
 
             let streamMsgDiv = null;
             let textContentEl = null;
+            let thoughtDetailsEl = null;
 
             try {
-                await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
+                await callApiStreamWithRetry(requestBody, loadingId, (chunk) => {
+                    const textChunk = typeof chunk === 'string' ? chunk : chunk.text;
+                    const isThought = typeof chunk === 'object' && chunk.isThought;
+
                     const el = document.getElementById(loadingId);
                     if (el) el.remove();
 
@@ -111,18 +125,51 @@ async function regenerateMessage(modelMessageIndex) {
                         chatBoxEl.appendChild(streamMsgDiv);
                     }
 
-                    currentResponseText += textChunk;
-                    if (!hasEncounteredPython) {
-                        let markerIdx = currentResponseText.indexOf("\`\`\`execute");
-                        if (markerIdx !== -1) {
-                            hasEncounteredPython = true;
-                            beforePythonText = currentResponseText.substring(0, markerIdx).trim();
-                            textContentEl.innerHTML = markdownToHtml(beforePythonText);
-                        } else {
-                            textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                    if (isThought) {
+                        currentThoughtText += textChunk;
+                        if (!thoughtDetailsEl) {
+                            thoughtDetailsEl = document.createElement('details');
+                            thoughtDetailsEl.className = 'thinking-details';
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
                         }
-                        chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+                        const thoughtContent = thoughtDetailsEl.querySelector('.thinking-details-content');
+                        if (thoughtContent) {
+                            thoughtContent.innerHTML = markdownToHtml(currentThoughtText);
+                        }
+                    } else {
+                        currentResponseText += textChunk;
+                        if (!hasEncounteredPython) {
+                            let markerIdx = currentResponseText.indexOf("\`\`\`execute");
+                            if (markerIdx !== -1) {
+                                hasEncounteredPython = true;
+                                beforePythonText = currentResponseText.substring(0, markerIdx).trim();
+                                let mainContent = textContentEl.querySelector('.thinking-main-response');
+                                if (!mainContent) {
+                                    mainContent = document.createElement('div');
+                                    mainContent.className = 'thinking-main-response';
+                                    textContentEl.appendChild(mainContent);
+                                }
+                                mainContent.innerHTML = markdownToHtml(beforePythonText);
+                            } else {
+                                let mainContent = textContentEl.querySelector('.thinking-main-response');
+                                if (currentThoughtText && !mainContent) {
+                                    mainContent = document.createElement('div');
+                                    mainContent.className = 'thinking-main-response';
+                                    textContentEl.appendChild(mainContent);
+                                }
+                                if (mainContent) {
+                                    mainContent.innerHTML = markdownToHtml(currentResponseText);
+                                } else {
+                                    textContentEl.innerHTML = (thoughtDetailsEl ? thoughtDetailsEl.outerHTML : '') + markdownToHtml(currentResponseText);
+                                    if (thoughtDetailsEl) {
+                                        thoughtDetailsEl = textContentEl.querySelector('.thinking-details');
+                                    }
+                                }
+                            }
+                        }
                     }
+                    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
                 }, API_MAX_RETRY_LOOPS, abortController.signal);
             } catch (streamErr) {
                 if (streamErr.name === 'AbortError') {
@@ -142,6 +189,7 @@ async function regenerateMessage(modelMessageIndex) {
 
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
+            const thoughtText = currentThoughtText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
             
             const isValidPython = keepGoing && match && pythonExecutorInstance;
@@ -260,13 +308,20 @@ async function regenerateMessage(modelMessageIndex) {
                 continue;
 
             } else {
-                const newModelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
+                let displayText = responseText;
+                let isHtmlDisplay = false;
+                if (thoughtText) {
+                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                    displayText = thoughtHtml + markdownToHtml(responseText);
+                    isHtmlDisplay = true;
+                }
+                const newModelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
                 history.push(newModelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, responseText, history.length - 1);
+                renderMessage("model", responseText, false, displayText, history.length - 1, false, isHtmlDisplay);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", responseText, responseText);
+                    const msgId = await addMessage(activeConvId, "model", responseText, displayText);
                     newModelMsg.messageId = msgId;
 
                     if (isFirstPair && !isAborted) {
@@ -370,15 +425,29 @@ async function sendMessage() {
             ];
 
             const requestBody = { contents: payloadHistory };
+            if (isThinkingEnabled && currentThinkingLevel) {
+                requestBody.generationConfig = {
+                    thinkingConfig: {
+                        thinkingLevel: currentThinkingLevel,
+                        includeThoughts: true
+                    }
+                };
+                requestBody.model = THINKING_MODEL;
+            }
             let currentResponseText = "";
+            let currentThoughtText = "";
             let beforePythonText = "";
             let hasEncounteredPython = false;
 
             let streamMsgDiv = null;
             let textContentEl = null;
+            let thoughtDetailsEl = null;
 
             try {
-                await callApiStreamWithRetry(requestBody, loadingId, (textChunk) => {
+                await callApiStreamWithRetry(requestBody, loadingId, (chunk) => {
+                    const textChunk = typeof chunk === 'string' ? chunk : chunk.text;
+                    const isThought = typeof chunk === 'object' && chunk.isThought;
+
                     const el = document.getElementById(loadingId);
                     if (el) el.remove();
 
@@ -396,18 +465,51 @@ async function sendMessage() {
                         chatBoxEl.appendChild(streamMsgDiv);
                     }
 
-                    currentResponseText += textChunk;
-                    if (!hasEncounteredPython) {
-                        let markerIdx = currentResponseText.indexOf("\`\`\`execute");
-                        if (markerIdx !== -1) {
-                            hasEncounteredPython = true;
-                            beforePythonText = currentResponseText.substring(0, markerIdx).trim();
-                            textContentEl.innerHTML = markdownToHtml(beforePythonText);
-                        } else {
-                            textContentEl.innerHTML = markdownToHtml(currentResponseText);
+                    if (isThought) {
+                        currentThoughtText += textChunk;
+                        if (!thoughtDetailsEl) {
+                            thoughtDetailsEl = document.createElement('details');
+                            thoughtDetailsEl.className = 'thinking-details';
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
                         }
-                        chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+                        const thoughtContent = thoughtDetailsEl.querySelector('.thinking-details-content');
+                        if (thoughtContent) {
+                            thoughtContent.innerHTML = markdownToHtml(currentThoughtText);
+                        }
+                    } else {
+                        currentResponseText += textChunk;
+                        if (!hasEncounteredPython) {
+                            let markerIdx = currentResponseText.indexOf("\`\`\`execute");
+                            if (markerIdx !== -1) {
+                                hasEncounteredPython = true;
+                                beforePythonText = currentResponseText.substring(0, markerIdx).trim();
+                                let mainContent = textContentEl.querySelector('.thinking-main-response');
+                                if (!mainContent) {
+                                    mainContent = document.createElement('div');
+                                    mainContent.className = 'thinking-main-response';
+                                    textContentEl.appendChild(mainContent);
+                                }
+                                mainContent.innerHTML = markdownToHtml(beforePythonText);
+                            } else {
+                                let mainContent = textContentEl.querySelector('.thinking-main-response');
+                                if (currentThoughtText && !mainContent) {
+                                    mainContent = document.createElement('div');
+                                    mainContent.className = 'thinking-main-response';
+                                    textContentEl.appendChild(mainContent);
+                                }
+                                if (mainContent) {
+                                    mainContent.innerHTML = markdownToHtml(currentResponseText);
+                                } else {
+                                    textContentEl.innerHTML = (thoughtDetailsEl ? thoughtDetailsEl.outerHTML : '') + markdownToHtml(currentResponseText);
+                                    if (thoughtDetailsEl) {
+                                        thoughtDetailsEl = textContentEl.querySelector('.thinking-details');
+                                    }
+                                }
+                            }
+                        }
                     }
+                    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
                 }, API_MAX_RETRY_LOOPS, abortController.signal);
             } catch (streamErr) {
                 if (streamErr.name === 'AbortError') {
@@ -427,6 +529,7 @@ async function sendMessage() {
 
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
+            const thoughtText = currentThoughtText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
             
             const isValidPython = keepGoing && match && pythonExecutorInstance;
@@ -548,13 +651,20 @@ async function sendMessage() {
                 continue;
 
             } else {
-                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: responseText };
+                let displayText = responseText;
+                let isHtmlDisplay = false;
+                if (thoughtText) {
+                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                    displayText = thoughtHtml + markdownToHtml(responseText);
+                    isHtmlDisplay = true;
+                }
+                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
                 history.push(modelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, responseText, history.length - 1);
+                renderMessage("model", responseText, false, displayText, history.length - 1, false, isHtmlDisplay);
 
                 if (currentUser && activeConvId) {
-                    await addMessage(activeConvId, "model", responseText, responseText);
+                    await addMessage(activeConvId, "model", responseText, displayText);
 
                     if (isFirstMessageTurn && !isAborted) {
                         await generateAndSetConversationTitle(activeConvId, text, responseText);

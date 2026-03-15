@@ -8,4 +8,6 @@ let pythonExecutorInstance = null;
 let isPythonEnabled = true;
 let animatingConversationId = null;
 let abortController = null;
+let isThinkingEnabled = false;
+let currentThinkingLevel = null;
 

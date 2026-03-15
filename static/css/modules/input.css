@@ -184,3 +184,95 @@ button#send-button svg {
     margin-top: 12px;
     opacity: 0.6;
 }
+
+.thinking-pill-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.thinking-pill .tool-pill-label:empty {
+    display: none;
+}
+
+.thinking-pill-chevron {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    margin-left: -2px;
+}
+
+.thinking-pill-chevron svg {
+    width: 14px;
+    height: 14px;
+}
+
+.thinking-dropdown.open ~ .thinking-pill .thinking-pill-chevron,
+.thinking-pill-wrapper:has(.thinking-dropdown.open) .thinking-pill-chevron {
+    transform: rotate(180deg);
+}
+
+.thinking-dropdown {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    min-width: 140px;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    z-index: 100;
+    animation: thinkingDropdownIn 0.15s ease-out;
+}
+
+.thinking-dropdown.open {
+    display: flex;
+}
+
+@keyframes thinkingDropdownIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.thinking-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.thinking-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.thinking-dropdown-item.selected {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--accent-strong);
+    font-weight: 500;
+}
