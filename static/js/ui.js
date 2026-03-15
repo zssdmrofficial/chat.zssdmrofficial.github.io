@@ -335,6 +335,33 @@ function escapeHtml(text) {
 function markdownToHtml(mdText) {
     if (typeof mdText !== "string") return "";
 
+    const latexBlocks = [];
+    let textToProcess = mdText;
+
+    // 提取 Block LaTeX: $$...$$ 或 \[...\]
+    textToProcess = textToProcess.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+        const id = `:::LATEX_BLOCK_${latexBlocks.length}:::`;
+        latexBlocks.push({ id, formula, isBlock: true });
+        return id;
+    });
+    textToProcess = textToProcess.replace(/\\\[([\s\S]+?)\\\]/g, (match, formula) => {
+        const id = `:::LATEX_BLOCK_${latexBlocks.length}:::`;
+        latexBlocks.push({ id, formula, isBlock: true });
+        return id;
+    });
+
+    // 提取 Inline LaTeX: $...$ 或 \(...\)
+    textToProcess = textToProcess.replace(/\$([^\s\$](?:[^\$]*[^\s\$])?)\$/g, (match, formula) => {
+        const id = `:::LATEX_INLINE_${latexBlocks.length}:::`;
+        latexBlocks.push({ id, formula, isBlock: false });
+        return id;
+    });
+    textToProcess = textToProcess.replace(/\\\(([\s\S]+?)\\\)/g, (match, formula) => {
+        const id = `:::LATEX_INLINE_${latexBlocks.length}:::`;
+        latexBlocks.push({ id, formula, isBlock: false });
+        return id;
+    });
+
     if (typeof marked !== 'undefined') {
         marked.setOptions({
             highlight: function (code, lang) {
@@ -347,7 +374,20 @@ function markdownToHtml(mdText) {
             langPrefix: 'hljs language-'
         });
 
-        let html = marked.parse(mdText);
+        let html = marked.parse(textToProcess);
+
+        // 還原並渲染 LaTeX
+        latexBlocks.forEach(item => {
+            try {
+                const rendered = typeof katex !== 'undefined' ?
+                    katex.renderToString(item.formula, { displayMode: item.isBlock, throwOnError: false }) :
+                    (item.isBlock ? `$$${item.formula}$$` : `$${item.formula}$`);
+                html = html.replace(item.id, rendered);
+            } catch (e) {
+                console.error("KaTeX rendering error:", e);
+                html = html.replace(item.id, item.formula);
+            }
+        });
 
         const div = document.createElement('div');
         div.innerHTML = html;
