@@ -80,8 +80,20 @@ function togglePromptTool(id) {
 
 function buildToolContextPayload() {
     if (!activeToolIds.size) return '';
+    const injectedMarkers = new Set();
+    for (const msg of history) {
+        const text = msg.parts?.[0]?.text || '';
+        if (!text.startsWith('【工具資訊】')) continue;
+        for (const tool of PROMPT_TOOLS) {
+            const marker = `【${tool.label || tool.id}】`;
+            if (text.includes(marker)) {
+                injectedMarkers.add(tool.id);
+            }
+        }
+    }
     const sections = [];
     activeToolIds.forEach((id) => {
+        if (injectedMarkers.has(id)) return;
         const tool = getToolById(id);
         const content = getToolContent(tool).trim();
         if (!tool || !content) return;
