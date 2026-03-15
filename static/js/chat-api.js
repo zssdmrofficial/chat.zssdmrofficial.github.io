@@ -662,7 +662,8 @@ async function sendMessage() {
                 renderMessage("model", responseText, false, displayText, history.length - 1, false, isHtmlDisplay);
 
                 if (currentUser && activeConvId) {
-                    await addMessage(activeConvId, "model", responseText, displayText);
+                    const msgId = await addMessage(activeConvId, "model", responseText, displayText);
+                    modelMsg.messageId = msgId;
 
                     if (isFirstMessageTurn && !isAborted) {
                         await generateAndSetConversationTitle(activeConvId, text, responseText);
