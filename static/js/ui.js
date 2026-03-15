@@ -119,13 +119,6 @@ function renderThinkingPill() {
     wrapper.appendChild(pill);
     wrapper.appendChild(dropdown);
     promptToolsListEl.prepend(wrapper);
-
-    document.addEventListener('click', function closeThinkingDropdown(e) {
-        if (!wrapper.contains(e.target)) {
-            dropdown.classList.remove('open');
-            document.removeEventListener('click', closeThinkingDropdown);
-        }
-    });
 }
 
 function togglePromptTool(id) {

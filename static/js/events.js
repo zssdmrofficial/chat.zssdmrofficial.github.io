@@ -53,3 +53,13 @@ window.copyCode = function (btn, code) {
         console.error('Copy failed', err);
     });
 };
+
+document.addEventListener('click', (e) => {
+    const openDropdowns = document.querySelectorAll('.thinking-dropdown.open');
+    openDropdowns.forEach(dropdown => {
+        const wrapper = dropdown.closest('.thinking-pill-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+    });
+});
