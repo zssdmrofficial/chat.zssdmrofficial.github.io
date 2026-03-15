@@ -136,7 +136,7 @@ function renderThinkingPill() {
 
     wrapper.appendChild(pill);
     wrapper.appendChild(dropdown);
-    promptToolsListEl.appendChild(wrapper);
+    promptToolsListEl.prepend(wrapper);
 
     document.addEventListener('click', function closeThinkingDropdown(e) {
         if (!wrapper.contains(e.target)) {
