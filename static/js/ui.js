@@ -81,15 +81,12 @@ function renderThinkingPill() {
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'tool-pill thinking-pill';
-    if (isThinkingEnabled) pill.classList.add('active');
 
-    const levelLabel = currentThinkingLevel
-        ? THINKING_LEVELS.find(l => l.value === currentThinkingLevel)?.label || ''
-        : '';
+    const levelLabel = THINKING_LEVELS.find(l => l.value === currentThinkingLevel)?.label || '';
 
     pill.innerHTML = `
         <div class="tool-pill-icon">${THINKING_TOOL_ICON}</div>
-        <span class="tool-pill-label">${isThinkingEnabled && levelLabel ? levelLabel : ''}</span>
+        <span class="tool-pill-label">${levelLabel}</span>
         <div class="thinking-pill-chevron">${CHEVRON_DOWN_ICON}</div>
     `;
 
@@ -104,29 +101,14 @@ function renderThinkingPill() {
     const dropdown = document.createElement('div');
     dropdown.className = 'thinking-dropdown';
 
-    const offItem = document.createElement('button');
-    offItem.type = 'button';
-    offItem.className = 'thinking-dropdown-item';
-    if (!isThinkingEnabled) offItem.classList.add('selected');
-    offItem.textContent = 'Off';
-    offItem.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isThinkingEnabled = false;
-        currentThinkingLevel = null;
-        dropdown.classList.remove('open');
-        renderPromptTools();
-    });
-    dropdown.appendChild(offItem);
-
     THINKING_LEVELS.forEach(level => {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'thinking-dropdown-item';
-        if (isThinkingEnabled && currentThinkingLevel === level.value) item.classList.add('selected');
+        if (currentThinkingLevel === level.value) item.classList.add('selected');
         item.textContent = level.label;
         item.addEventListener('click', (e) => {
             e.stopPropagation();
-            isThinkingEnabled = true;
             currentThinkingLevel = level.value;
             dropdown.classList.remove('open');
             renderPromptTools();

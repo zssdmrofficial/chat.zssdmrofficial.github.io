@@ -85,7 +85,7 @@ async function regenerateMessage(modelMessageIndex) {
             ];
 
             const requestBody = { contents: payloadHistory };
-            if (isThinkingEnabled && currentThinkingLevel) {
+            if (currentThinkingLevel) {
                 requestBody.generationConfig = {
                     thinkingConfig: {
                         thinkingLevel: currentThinkingLevel,
@@ -424,7 +424,7 @@ async function sendMessage() {
             ];
 
             const requestBody = { contents: payloadHistory };
-            if (isThinkingEnabled && currentThinkingLevel) {
+            if (currentThinkingLevel) {
                 requestBody.generationConfig = {
                     thinkingConfig: {
                         thinkingLevel: currentThinkingLevel,
