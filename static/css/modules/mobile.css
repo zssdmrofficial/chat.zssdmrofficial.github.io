@@ -155,4 +155,18 @@
         row-gap: 6px;
         min-width: 0;
     }
+
+    .settings-sidebar {
+        width: 100px;
+        padding: 8px;
+    }
+
+    .settings-tab {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .settings-content {
+        padding: 16px;
+    }
 }
