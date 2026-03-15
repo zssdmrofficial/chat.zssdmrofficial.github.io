@@ -357,7 +357,6 @@
     margin-bottom: 0.5rem;
     font-weight: 700;
     color: var(--accent-strong);
-    text-shadow: 0 0 15px var(--accent-glow);
 }
 
 .text-content ul,
