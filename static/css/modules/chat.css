@@ -558,8 +558,20 @@
     font-size: 14px;
     color: var(--text-secondary);
     font-weight: 500;
-    line-height: 1;
+    line-height: normal;
     list-style: none;
+}
+
+.thinking-details summary span {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.thinking-title {
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
 .thinking-details summary::-webkit-details-marker {
