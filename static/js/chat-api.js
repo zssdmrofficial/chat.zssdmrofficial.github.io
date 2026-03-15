@@ -69,6 +69,9 @@ async function regenerateMessage(modelMessageIndex) {
                 { role: "user", parts: [{ text: isPythonEnabled ? (SYSTEM_INSTRUCTION + "\n" + CUSTOM_SYSTEM_PROMPT_ADDITION) : SYSTEM_INSTRUCTION }] },
                 ...history.map(msg => {
                     const sanitizedParts = msg.parts.map(p => {
+                        if (p.thought) {
+                            return { text: `[Thinking]\n${p.thought}` };
+                        }
                         if (p.functionCall) {
                             return { text: `[模型嘗試執行代碼]:\n${p.functionCall.args?.code || "(無代碼)"}` };
                         }
@@ -210,11 +213,18 @@ async function regenerateMessage(modelMessageIndex) {
 
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
+            let thoughtHtml = "";
+            if (thoughtText) {
+                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+            }
+
             if (hasEncounteredPython && isValidPython) {
                 if (beforePythonText) {
-                    const textBeforeMsg = { role: "model", parts: [{ text: beforePythonText }], displayText: beforePythonText };
+                    const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
+                    const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
+                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforePythonText, history.length - 1, false, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
 
                     let lastMsgWrapper = chatBoxEl.lastElementChild;
                     if (lastMsgWrapper) {
@@ -223,7 +233,8 @@ async function regenerateMessage(modelMessageIndex) {
                     }
 
                     if (currentUser && activeConvId) {
-                        const beforeMsgId = await addMessage(activeConvId, "model", beforePythonText, beforePythonText);
+                        const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
+                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay);
                         textBeforeMsg.messageId = beforeMsgId;
                         if (isFirstPair && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, userText, beforePythonText);
@@ -268,12 +279,19 @@ async function regenerateMessage(modelMessageIndex) {
                     </div>
                 `;
 
-                const newModelMsg = { role: "model", parts: [{ text: responseText }], displayText: pythonAnalysisHtml, isHtml: true };
+                const pyParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                let pyDisplay = pythonAnalysisHtml;
+                if (!beforePythonText && thoughtHtml) {
+                    pyDisplay = thoughtHtml + pyDisplay;
+                }
+
+                const newModelMsg = { role: "model", parts: pyParts, displayText: pyDisplay, isHtml: true };
                 history.push(newModelMsg);
-                renderMessage("model", responseText, false, pythonAnalysisHtml, history.length - 1, true, true);
+                renderMessage("model", responseText, false, pyDisplay, history.length - 1, true, true);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", responseText, pythonAnalysisHtml);
+                    const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                    const msgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay);
                     newModelMsg.messageId = msgId;
                 }
 
@@ -324,20 +342,16 @@ async function regenerateMessage(modelMessageIndex) {
                 continue;
 
             } else {
-                let displayText = responseText;
-                let isHtmlDisplay = false;
-                if (thoughtText) {
-                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
-                    displayText = thoughtHtml + markdownToHtml(responseText);
-                    isHtmlDisplay = true;
-                }
-                const newModelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
+                const finalParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                const finalDisplay = thoughtHtml + markdownToHtml(responseText);
+                const finalCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                const newModelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: !!thoughtText };
                 history.push(newModelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, displayText, history.length - 1, isHtmlDisplay, false);
+                renderMessage("model", responseText, false, finalDisplay, history.length - 1, !!thoughtText, false);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", responseText, displayText);
+                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay);
                     newModelMsg.messageId = msgId;
 
                     if (isFirstPair && !isAborted) {
@@ -567,11 +581,18 @@ async function sendMessage() {
 
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
+            let thoughtHtml = "";
+            if (thoughtText) {
+                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+            }
+
             if (hasEncounteredPython && isValidPython) {
                 if (beforePythonText) {
-                    const textBeforeMsg = { role: "model", parts: [{ text: beforePythonText }], displayText: beforePythonText };
+                    const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
+                    const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
+                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforePythonText, history.length - 1, false, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
 
                     let lastMsgWrapper = chatBoxEl.lastElementChild;
                     if (lastMsgWrapper) {
@@ -580,7 +601,8 @@ async function sendMessage() {
                     }
 
                     if (currentUser && activeConvId) {
-                        const beforeMsgId = await addMessage(activeConvId, "model", beforePythonText, beforePythonText);
+                        const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
+                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay);
                         textBeforeMsg.messageId = beforeMsgId;
                         if (isFirstMessageTurn && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, text, beforePythonText);
@@ -626,12 +648,19 @@ async function sendMessage() {
                     </div>
                 `;
 
-                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: pythonAnalysisHtml, isHtml: true };
+                const pyParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                let pyDisplay = pythonAnalysisHtml;
+                if (!beforePythonText && thoughtHtml) {
+                    pyDisplay = thoughtHtml + pyDisplay;
+                }
+
+                const modelMsg = { role: "model", parts: pyParts, displayText: pyDisplay, isHtml: true };
                 history.push(modelMsg);
-                renderMessage("model", responseText, false, pythonAnalysisHtml, history.length - 1, true, true);
+                renderMessage("model", responseText, false, pyDisplay, history.length - 1, true, true);
 
                 if (currentUser && activeConvId) {
-                    const pyMsgId = await addMessage(activeConvId, "model", responseText, pythonAnalysisHtml);
+                    const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                    const pyMsgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay);
                     modelMsg.messageId = pyMsgId;
                 }
 
@@ -684,20 +713,16 @@ async function sendMessage() {
                 continue;
 
             } else {
-                let displayText = responseText;
-                let isHtmlDisplay = false;
-                if (thoughtText) {
-                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
-                    displayText = thoughtHtml + markdownToHtml(responseText);
-                    isHtmlDisplay = true;
-                }
-                const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
+                const finalParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                const finalDisplay = thoughtHtml + markdownToHtml(responseText);
+                const finalCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                const modelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: !!thoughtText };
                 history.push(modelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, displayText, history.length - 1, isHtmlDisplay, false);
+                renderMessage("model", responseText, false, finalDisplay, history.length - 1, !!thoughtText, false);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", responseText, displayText);
+                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay);
                     modelMsg.messageId = msgId;
 
                     if (isFirstMessageTurn && !isAborted) {
