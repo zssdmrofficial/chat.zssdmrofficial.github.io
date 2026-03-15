@@ -1,5 +1,17 @@
 const PROMPT_TOOLS = [];
 (function initPromptTools() {
+    const zhangContent = (typeof window !== 'undefined' && typeof window.ZHANG_QUOTES_APPENDIX === 'string')
+        ? window.ZHANG_QUOTES_APPENDIX.trim()
+        : '';
+    if (zhangContent) {
+        PROMPT_TOOLS.push({
+            id: 'zhang-quotes',
+            label: '張國語錄',
+            description: '附加張國語錄全文給模型參考',
+            content: zhangContent,
+            icon: ZHANG_QUOTES_TOOL_ICON,
+        });
+    }
     const redContent = (typeof window !== 'undefined' && typeof window.RED_UNIVERSE_APPENDIX === 'string')
         ? window.RED_UNIVERSE_APPENDIX.trim()
         : '';
