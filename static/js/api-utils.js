@@ -135,8 +135,22 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
                     let parts = data?.candidates?.[0]?.content?.parts;
                     if (parts && Array.isArray(parts)) {
                         for (const part of parts) {
-                            if (part.text) {
-                                onChunk({ text: part.text, isThought: !!part.thought });
+                            if (part.text || part.thought) {
+                                let isThought = !!part.thought;
+                                let thoughtSummary = "";
+                                
+                                if (typeof part.thought === 'object' && part.thought !== null) {
+                                    isThought = true;
+                                    thoughtSummary = part.thought.summary || "";
+                                } else if (part.thought_title) {
+                                    thoughtSummary = part.thought_title;
+                                }
+
+                                onChunk({ 
+                                    text: part.text || (typeof part.thought === 'string' ? part.thought : ""), 
+                                    isThought: isThought,
+                                    thoughtSummary: thoughtSummary
+                                });
                             }
                         }
                     }

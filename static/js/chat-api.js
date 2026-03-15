@@ -126,17 +126,34 @@ async function regenerateMessage(modelMessageIndex) {
 
                     if (isThought) {
                         currentThoughtText += textChunk;
+                        let displayTitle = chunk.thoughtSummary || "";
+                        if (!displayTitle) {
+                            const matches = [...currentThoughtText.matchAll(/\*\*(.*?)\*\*/g)];
+                            if (matches.length > 0) {
+                                displayTitle = matches[matches.length - 1][1];
+                            }
+                        }
+
                         if (!thoughtDetailsEl) {
                             thoughtDetailsEl = document.createElement('details');
                             thoughtDetailsEl.className = 'thinking-details';
-                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
                             textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
+                        } else if (displayTitle) {
+                            const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
+                            if (titleEl && titleEl.textContent !== "Show Thinking") {
+                                titleEl.textContent = displayTitle;
+                            }
                         }
                         const thoughtContent = thoughtDetailsEl.querySelector('.thinking-details-content');
                         if (thoughtContent) {
                             thoughtContent.innerHTML = markdownToHtml(currentThoughtText);
                         }
                     } else {
+                        if (thoughtDetailsEl) {
+                            const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
+                            if (titleEl) titleEl.textContent = "Show Thinking";
+                        }
                         currentResponseText += textChunk;
                         if (!hasEncounteredPython) {
                             let markerIdx = currentResponseText.indexOf("\`\`\`execute");
@@ -178,7 +195,7 @@ async function regenerateMessage(modelMessageIndex) {
                         removeLoading(loadingId);
                         return;
                     }
-                    
+
                     keepGoing = false;
                     isAborted = true;
                 } else {
@@ -190,7 +207,7 @@ async function regenerateMessage(modelMessageIndex) {
             const responseText = currentResponseText;
             const thoughtText = currentThoughtText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            
+
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
@@ -310,7 +327,7 @@ async function regenerateMessage(modelMessageIndex) {
                 let displayText = responseText;
                 let isHtmlDisplay = false;
                 if (thoughtText) {
-                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
                     displayText = thoughtHtml + markdownToHtml(responseText);
                     isHtmlDisplay = true;
                 }
@@ -465,17 +482,35 @@ async function sendMessage() {
 
                     if (isThought) {
                         currentThoughtText += textChunk;
+
+                        let displayTitle = chunk.thoughtSummary || "";
+                        if (!displayTitle) {
+                            const matches = [...currentThoughtText.matchAll(/\*\*(.*?)\*\*/g)];
+                            if (matches.length > 0) {
+                                displayTitle = matches[matches.length - 1][1];
+                            }
+                        }
+
                         if (!thoughtDetailsEl) {
                             thoughtDetailsEl = document.createElement('details');
                             thoughtDetailsEl.className = 'thinking-details';
-                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
                             textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
+                        } else if (displayTitle) {
+                            const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
+                            if (titleEl && titleEl.textContent !== "Show Thinking") {
+                                titleEl.textContent = displayTitle;
+                            }
                         }
                         const thoughtContent = thoughtDetailsEl.querySelector('.thinking-details-content');
                         if (thoughtContent) {
                             thoughtContent.innerHTML = markdownToHtml(currentThoughtText);
                         }
                     } else {
+                        if (thoughtDetailsEl) {
+                            const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
+                            if (titleEl) titleEl.textContent = "Show Thinking";
+                        }
                         currentResponseText += textChunk;
                         if (!hasEncounteredPython) {
                             let markerIdx = currentResponseText.indexOf("\`\`\`execute");
@@ -517,7 +552,7 @@ async function sendMessage() {
                         removeLoading(loadingId);
                         return;
                     }
-                    
+
                     keepGoing = false;
                     isAborted = true;
                 } else {
@@ -529,7 +564,7 @@ async function sendMessage() {
             const responseText = currentResponseText;
             const thoughtText = currentThoughtText;
             const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
-            
+
             const isValidPython = keepGoing && match && pythonExecutorInstance;
 
             if (hasEncounteredPython && isValidPython) {
@@ -652,7 +687,7 @@ async function sendMessage() {
                 let displayText = responseText;
                 let isHtmlDisplay = false;
                 if (thoughtText) {
-                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                    const thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
                     displayText = thoughtHtml + markdownToHtml(responseText);
                     isHtmlDisplay = true;
                 }

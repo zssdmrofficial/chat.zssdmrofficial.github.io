@@ -59,6 +59,10 @@ function renderMessage(role, content, isError = false, displayContent = null, me
         innerContent = markdownToHtml(normalizedText);
     }
 
+    if (typeof innerContent === 'string') {
+        innerContent = innerContent.replace(/<span>Thinking<\/span>/g, '<span>Show Thinking</span>');
+    }
+
     const iconHtml = isUser
         ? ''
         : (hideIcon ? '<div class="role-icon" style="visibility: hidden; box-shadow: none;"></div>' : `<div class="role-icon icon-model">${MODEL_ROLE_ICON}</div>`);

@@ -338,7 +338,6 @@ function markdownToHtml(mdText) {
     const latexBlocks = [];
     let textToProcess = mdText;
 
-    // 提取 Block LaTeX: $$...$$ 或 \[...\]
     textToProcess = textToProcess.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
         const id = `:::LATEX_BLOCK_${latexBlocks.length}:::`;
         latexBlocks.push({ id, formula, isBlock: true });
@@ -350,7 +349,6 @@ function markdownToHtml(mdText) {
         return id;
     });
 
-    // 提取 Inline LaTeX: $...$ 或 \(...\)
     textToProcess = textToProcess.replace(/\$([^\s\$](?:[^\$]*[^\s\$])?)\$/g, (match, formula) => {
         const id = `:::LATEX_INLINE_${latexBlocks.length}:::`;
         latexBlocks.push({ id, formula, isBlock: false });
@@ -376,7 +374,6 @@ function markdownToHtml(mdText) {
 
         let html = marked.parse(textToProcess);
 
-        // 還原並渲染 LaTeX
         latexBlocks.forEach(item => {
             try {
                 const rendered = typeof katex !== 'undefined' ?
