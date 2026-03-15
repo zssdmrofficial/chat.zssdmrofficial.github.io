@@ -27,6 +27,10 @@ function showConfirmModal(message) {
         modal.appendChild(actions);
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
+        requestAnimationFrame(() => {
+            overlay.classList.add('is-open');
+            modal.classList.add('is-open');
+        });
 
         confirmBtn.focus();
 
@@ -191,6 +195,10 @@ function showSettingsModal() {
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        overlay.classList.add('is-open');
+        modal.classList.add('is-open');
+    });
 
     const close = () => {
         document.body.removeChild(overlay);
@@ -276,6 +284,10 @@ function showChangePasswordModal() {
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        overlay.classList.add('is-open');
+        modal.classList.add('is-open');
+    });
 
     const oldPwdEl = overlay.querySelector('#pwd-old');
     const newPwdEl = overlay.querySelector('#pwd-new');
@@ -395,6 +407,10 @@ function showReauthModal(message) {
 
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
+        requestAnimationFrame(() => {
+            overlay.classList.add('is-open');
+            modal.classList.add('is-open');
+        });
 
         const pwdEl = overlay.querySelector('#reauth-pwd');
         const errorEl = overlay.querySelector('#reauth-error');

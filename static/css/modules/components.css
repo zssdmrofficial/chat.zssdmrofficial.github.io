@@ -11,7 +11,15 @@
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    animation: fadeInModal 0.2s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out;
+    will-change: opacity, backdrop-filter;
+}
+
+.custom-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .custom-modal {
@@ -26,9 +34,18 @@
     width: 90%;
     max-width: 400px;
     text-align: center;
-    animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     overflow: hidden;
     z-index: 10;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: transform, opacity, backdrop-filter;
+}
+
+.custom-modal.is-open {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .custom-modal::before {
