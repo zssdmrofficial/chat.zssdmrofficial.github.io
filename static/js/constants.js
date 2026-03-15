@@ -142,8 +142,6 @@ const THINKING_LEVELS = [
     { value: 'HIGH', label: 'High' },
 ];
 
-const THINKING_MODEL = 'gemini-3.1-flash-lite';
-
 const MESSAGE_COPY_FEEDBACK_DURATION = 2000;
 const FIRESTORE_BATCH_LIMIT = 450;
 const API_MAX_RETRY_LOOPS = 5;

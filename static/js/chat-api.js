@@ -92,7 +92,6 @@ async function regenerateMessage(modelMessageIndex) {
                         includeThoughts: true
                     }
                 };
-                requestBody.model = THINKING_MODEL;
             }
             let currentResponseText = "";
             let currentThoughtText = "";
@@ -432,7 +431,6 @@ async function sendMessage() {
                         includeThoughts: true
                     }
                 };
-                requestBody.model = THINKING_MODEL;
             }
             let currentResponseText = "";
             let currentThoughtText = "";
