@@ -43,29 +43,59 @@ function renderPromptTools() {
     if (!promptToolsListEl) return;
     updatePromptToolBlockVisibility();
     promptToolsListEl.innerHTML = '';
-    PROMPT_TOOLS.forEach(tool => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'tool-pill';
-        button.dataset.toolId = tool.id;
-        button.setAttribute('aria-pressed', activeToolIds.has(tool.id).toString());
-        if (activeToolIds.has(tool.id)) {
-            button.classList.add('active');
+
+    const promptWrapper = document.createElement('div');
+    promptWrapper.className = 'prompt-pill-wrapper';
+
+    const promptPill = document.createElement('button');
+    promptPill.type = 'button';
+    promptPill.className = 'tool-pill prompt-pill';
+    
+    const activeCount = activeToolIds.size;
+    const activeLabel = activeCount > 0 ? `附帶資料 (${activeCount})` : '附帶資料';
+
+    promptPill.innerHTML = `
+        <div class="tool-pill-icon">${DEFAULT_TOOL_PILL_ICON}</div>
+        <span class="tool-pill-label">${activeLabel}</span>
+        <div class="prompt-pill-chevron">${CHEVRON_DOWN_ICON}</div>
+    `;
+
+    promptPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = promptWrapper.querySelector('.prompt-dropdown');
+        const isOpening = !dropdown.classList.contains('open');
+        document.querySelectorAll('.thinking-dropdown, .prompt-dropdown').forEach(d => d.classList.remove('open'));
+        if (isOpening) {
+            dropdown.classList.add('open');
         }
-        const safeLabel = escapeHtml(tool.label || tool.id);
-        const description = tool.description ? escapeHtml(tool.description) : '';
-        const iconMarkup = getToolIconMarkup(tool);
-        button.innerHTML = `
-            <div class="tool-pill-icon">${iconMarkup}</div>
-            <span class="tool-pill-label">${safeLabel}</span>
-            <div class="tool-pill-remove">${TOOL_PILL_REMOVE_ICON}</div>
-        `;
-        if (description) {
-            button.title = description;
-        }
-        button.addEventListener('click', () => togglePromptTool(tool.id));
-        promptToolsListEl.appendChild(button);
     });
+
+    const promptDropdown = document.createElement('div');
+    promptDropdown.className = 'prompt-dropdown';
+
+    PROMPT_TOOLS.forEach(tool => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'prompt-dropdown-item';
+        if (activeToolIds.has(tool.id)) item.classList.add('selected');
+        
+        const iconMarkup = getToolIconMarkup(tool);
+        item.innerHTML = `
+            <div class="tool-pill-icon">${iconMarkup}</div>
+            <span class="tool-pill-label">${escapeHtml(tool.label || tool.id)}</span>
+        `;
+
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePromptTool(tool.id);
+        });
+        promptDropdown.appendChild(item);
+    });
+
+    promptWrapper.appendChild(promptPill);
+    promptWrapper.appendChild(promptDropdown);
+    promptToolsListEl.appendChild(promptWrapper);
+
     renderThinkingPill();
     updatePromptToolsCounter();
 }
@@ -93,8 +123,10 @@ function renderThinkingPill() {
     pill.addEventListener('click', (e) => {
         e.stopPropagation();
         const dropdown = wrapper.querySelector('.thinking-dropdown');
-        if (dropdown) {
-            dropdown.classList.toggle('open');
+        const isOpening = !dropdown.classList.contains('open');
+        document.querySelectorAll('.thinking-dropdown, .prompt-dropdown').forEach(d => d.classList.remove('open'));
+        if (isOpening) {
+            dropdown.classList.add('open');
         }
     });
 
@@ -120,6 +152,7 @@ function renderThinkingPill() {
     wrapper.appendChild(dropdown);
     promptToolsListEl.prepend(wrapper);
 }
+
 
 function togglePromptTool(id) {
     if (activeToolIds.has(id)) {

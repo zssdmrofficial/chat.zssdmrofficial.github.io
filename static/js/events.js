@@ -55,9 +55,9 @@ window.copyCode = function (btn, code) {
 };
 
 document.addEventListener('click', (e) => {
-    const openDropdowns = document.querySelectorAll('.thinking-dropdown.open');
+    const openDropdowns = document.querySelectorAll('.thinking-dropdown.open, .prompt-dropdown.open');
     openDropdowns.forEach(dropdown => {
-        const wrapper = dropdown.closest('.thinking-pill-wrapper');
+        const wrapper = dropdown.closest('.thinking-pill-wrapper, .prompt-pill-wrapper');
         if (wrapper && !wrapper.contains(e.target)) {
             dropdown.classList.remove('open');
         }

@@ -185,16 +185,19 @@ button#send-button svg {
     opacity: 0.6;
 }
 
-.thinking-pill-wrapper {
+.thinking-pill-wrapper,
+.prompt-pill-wrapper {
     position: relative;
     display: inline-flex;
 }
 
-.thinking-pill .tool-pill-label:empty {
+.thinking-pill .tool-pill-label:empty,
+.prompt-pill .tool-pill-label:empty {
     display: none;
 }
 
-.thinking-pill-chevron {
+.thinking-pill-chevron,
+.prompt-pill-chevron {
     width: 16px;
     height: 16px;
     display: inline-flex;
@@ -204,21 +207,25 @@ button#send-button svg {
     margin-left: -2px;
 }
 
-.thinking-pill-chevron svg {
+.thinking-pill-chevron svg,
+.prompt-pill-chevron svg {
     width: 14px;
     height: 14px;
 }
 
-.thinking-dropdown.open ~ .thinking-pill .thinking-pill-chevron,
-.thinking-pill-wrapper:has(.thinking-dropdown.open) .thinking-pill-chevron {
+.thinking-dropdown.open~.thinking-pill .thinking-pill-chevron,
+.thinking-pill-wrapper:has(.thinking-dropdown.open) .thinking-pill-chevron,
+.prompt-dropdown.open~.prompt-pill .prompt-pill-chevron,
+.prompt-pill-wrapper:has(.prompt-dropdown.open) .prompt-pill-chevron {
     transform: rotate(180deg);
 }
 
-.thinking-dropdown {
+.thinking-dropdown,
+.prompt-dropdown {
     position: absolute;
     bottom: calc(100% + 8px);
     left: 0;
-    min-width: 140px;
+    min-width: 180px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
@@ -231,9 +238,11 @@ button#send-button svg {
     box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4);
     z-index: 1000;
     overflow: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.thinking-dropdown::before {
+.thinking-dropdown::before,
+.prompt-dropdown::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -246,7 +255,8 @@ button#send-button svg {
     filter: brightness(60%) grayscale(18%) blur(2px);
 }
 
-.thinking-dropdown.open {
+.thinking-dropdown.open,
+.prompt-dropdown.open {
     opacity: 1;
     pointer-events: auto;
     animation: thinkingDropdownIn 0.15s ease-out;
@@ -254,18 +264,20 @@ button#send-button svg {
     -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
-@keyframes thinkingDropdownIn {
+@keyframes dropdownIn {
     from {
         opacity: 0;
-        margin-bottom: -4px;
+        transform: translateY(4px);
     }
+
     to {
         opacity: 1;
-        margin-bottom: 0;
+        transform: translateY(0);
     }
 }
 
-.thinking-dropdown-item {
+.thinking-dropdown-item,
+.prompt-dropdown-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -279,17 +291,26 @@ button#send-button svg {
     transition: all 0.15s ease;
     white-space: nowrap;
     font-family: inherit;
+    text-align: left;
+    width: 100%;
 }
 
-.thinking-dropdown-item:hover {
+.thinking-dropdown-item:hover,
+.prompt-dropdown-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
 }
 
-.thinking-dropdown-item.selected {
+.thinking-dropdown-item.selected,
+.prompt-dropdown-item.selected {
     background: rgba(255, 255, 255, 0.12);
     color: var(--accent-strong);
     font-weight: 500;
+}
+
+.prompt-dropdown-item .tool-pill-icon svg {
+    width: 16px;
+    height: 16px;
 }
 
 .input-bg-footer {

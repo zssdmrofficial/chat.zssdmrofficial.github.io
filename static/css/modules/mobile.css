@@ -28,18 +28,43 @@
     }
 
     .input-container {
-        padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+        padding: 8px 12px max(8px, env(safe-area-inset-bottom));
         bottom: 0;
     }
 
     .input-wrapper {
-        padding: 9px 16px;
-        min-height: 36px;
+        padding: 8px 12px;
+        min-height: 40px;
+        gap: 8px;
+        border-radius: 20px;
     }
 
     .prompt-tools-block {
-        padding: 8px 0 0;
+        padding: 6px 0 0;
+        margin-top: 0;
     }
+
+    .prompt-tools-list {
+        gap: 8px;
+        min-height: auto;
+    }
+
+    .tool-pill {
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+
+    .thinking-dropdown,
+    .prompt-dropdown {
+        min-width: 160px;
+        bottom: calc(100% + 4px);
+    }
+
+    textarea {
+        font-size: 15px;
+        padding: 2px 0;
+    }
+
 
     body.sidebar-open .sidebar {
         display: flex;
