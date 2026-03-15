@@ -334,7 +334,7 @@ async function regenerateMessage(modelMessageIndex) {
                 const newModelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
                 history.push(newModelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, displayText, history.length - 1, false, isHtmlDisplay);
+                renderMessage("model", responseText, false, displayText, history.length - 1, isHtmlDisplay, false);
 
                 if (currentUser && activeConvId) {
                     const msgId = await addMessage(activeConvId, "model", responseText, displayText);
@@ -694,7 +694,7 @@ async function sendMessage() {
                 const modelMsg = { role: "model", parts: [{ text: responseText }], displayText: displayText, isHtml: isHtmlDisplay };
                 history.push(modelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, displayText, history.length - 1, false, isHtmlDisplay);
+                renderMessage("model", responseText, false, displayText, history.length - 1, isHtmlDisplay, false);
 
                 if (currentUser && activeConvId) {
                     const msgId = await addMessage(activeConvId, "model", responseText, displayText);

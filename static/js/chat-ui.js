@@ -270,11 +270,13 @@ function renderHistory() {
     chatBoxEl.innerHTML = '';
     history.forEach((msg, index) => {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
-        const isHtml = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
+        const isPythonIndicator = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
+        const isThought = typeof msg.displayText === 'string' && msg.displayText.includes('thinking-details');
+        const isHtml = isPythonIndicator || isThought;
         const msgText = msg.parts[0].text || '';
         const isSystemCodeResult = msgText.startsWith('(System: Code execution result)');
         const isPythonResult = (msgText === '' || isSystemCodeResult) && typeof msg.displayText === 'string' && msg.displayText.includes('Python 執行結果');
-        const shouldHideActions = isHtml || isPythonResult;
+        const shouldHideActions = isPythonIndicator || isPythonResult;
 
         const renderRole = isPythonResult ? 'model' : msg.role;
         const renderText = isPythonResult ? '' : msg.parts[0].text;
