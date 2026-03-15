@@ -359,6 +359,26 @@
     color: var(--accent-strong);
 }
 
+.text-content h1 { font-size: 1.875rem; }
+.text-content h2 { font-size: 1.5rem; }
+.text-content h3 { font-size: 1.25rem; }
+
+.text-content > *:first-child {
+    margin-top: 0 !important;
+}
+
+.message-content:has(.text-content > h1:first-child) .icon-model {
+    margin-top: calc((1.7 * 1.875rem - 32px) / 2);
+}
+
+.message-content:has(.text-content > h2:first-child) .icon-model {
+    margin-top: calc((1.7 * 1.5rem - 32px) / 2);
+}
+
+.message-content:has(.text-content > h3:first-child) .icon-model {
+    margin-top: calc((1.7 * 1.25rem - 32px) / 2);
+}
+
 .text-content ul,
 .text-content ol {
     margin-bottom: 1rem;
