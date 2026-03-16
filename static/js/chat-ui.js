@@ -257,6 +257,9 @@ function renderConversationList(conversations) {
                 return;
             }
             if (conv.id === currentConversationId) return;
+            const allItems = conversationListEl.querySelectorAll('.history-item');
+            allItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
             loadMessages(conv.id);
             closeMobileSidebar();
         });
@@ -268,6 +271,9 @@ function renderConversationList(conversations) {
 
 function renderHistory() {
     chatBoxEl.innerHTML = '';
+    chatBoxEl.classList.remove('settings-fade-in');
+    void chatBoxEl.offsetWidth;
+    chatBoxEl.classList.add('settings-fade-in');
     history.forEach((msg, index) => {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
         const isPythonIndicator = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
