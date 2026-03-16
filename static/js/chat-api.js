@@ -62,7 +62,7 @@ async function regenerateMessage(modelMessageIndex) {
         let loopCount = 0;
         let isAborted = false;
 
-        while (keepGoing && loopCount < API_MAX_RETRY_LOOPS) {
+        while (keepGoing) {
             loopCount++;
 
             let payloadHistory = [
@@ -224,12 +224,12 @@ async function regenerateMessage(modelMessageIndex) {
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
                     const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, true, true);
 
                     let lastMsgWrapper = chatBoxEl.lastElementChild;
                     if (lastMsgWrapper) {
-                        let regenBtn = lastMsgWrapper.querySelector(".regenerate-message-btn");
-                        if (regenBtn) regenBtn.remove();
+                        let footer = lastMsgWrapper.querySelector(".message-footer");
+                        if (footer) footer.remove();
                     }
 
                     if (currentUser && activeConvId) {
@@ -431,7 +431,7 @@ async function sendMessage() {
         let loopCount = 0;
         let isAborted = false;
 
-        while (keepGoing && loopCount < API_MAX_RETRY_LOOPS) {
+        while (keepGoing) {
             loopCount++;
 
             let payloadHistory = [
@@ -592,12 +592,12 @@ async function sendMessage() {
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
                     const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, true, true);
 
                     let lastMsgWrapper = chatBoxEl.lastElementChild;
                     if (lastMsgWrapper) {
-                        let regenBtn = lastMsgWrapper.querySelector(".regenerate-message-btn");
-                        if (regenBtn) regenBtn.remove();
+                        let footer = lastMsgWrapper.querySelector(".message-footer");
+                        if (footer) footer.remove();
                     }
 
                     if (currentUser && activeConvId) {

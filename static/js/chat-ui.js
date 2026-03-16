@@ -276,17 +276,39 @@ function renderHistory() {
         const msgText = msg.parts[0].text || '';
         const isSystemCodeResult = msgText.startsWith('(System: Code execution result)');
         const isPythonResult = (msgText === '' || isSystemCodeResult) && typeof msg.displayText === 'string' && msg.displayText.includes('Python 執行結果');
-        const shouldHideActions = isPythonIndicator || isPythonResult;
-
+        let shouldHideActions = isPythonIndicator || isPythonResult;
         const renderRole = isPythonResult ? 'model' : msg.role;
         const renderText = isPythonResult ? '' : msg.parts[0].text;
 
         let hideRegen = false;
-        if (renderRole === 'model' && !isHtml && !isPythonResult) {
-            const nextMsg = history[index + 1];
-            if (nextMsg && typeof nextMsg.displayText === 'string' && nextMsg.displayText.includes('python-analysis-indicator')) {
-                hideRegen = true;
+        if (renderRole === 'model' && !shouldHideActions) {
+            let isLastRegenerableInTurn = true;
+            for (let i = index + 1; i < history.length; i++) {
+                const nextM = history[i];
+                const nextT = nextM.parts[0]?.text || '';
+                const isRealUser = nextM.role === 'user' && !nextT.startsWith('(System: Code execution result)');
+
+                if (isRealUser) {
+                    break;
+                }
+
+                const nextIsPythonIndicator = typeof nextM.displayText === 'string' && nextM.displayText.includes('python-analysis-indicator');
+                const nextIsSystemCodeResult = nextT.startsWith('(System: Code execution result)');
+                const nextIsPythonResult = (nextT === '' || nextIsSystemCodeResult) && typeof nextM.displayText === 'string' && nextM.displayText.includes('Python 執行結果');
+                const nextShouldHideActions = nextIsPythonIndicator || nextIsPythonResult;
+                const nextRenderRole = nextIsPythonResult ? 'model' : nextM.role;
+
+                if (nextRenderRole === 'model' && !nextShouldHideActions) {
+                    isLastRegenerableInTurn = false;
+                    break;
+                }
             }
+            if (!isLastRegenerableInTurn) {
+                hideRegen = true;
+                shouldHideActions = true; // Also hide copy button for intermediate messages
+            }
+        } else if (renderRole === 'model') {
+            hideRegen = true;
         }
 
         renderMessage(renderRole, renderText, false, msg.displayText, index, isHtml, shouldHideActions, hideRegen, isPythonResult);
