@@ -57,6 +57,7 @@ export class PythonExecutor {
                     output: execOutput || "[Image Generated]",
                     logs: execOutput || "Generated a plot.",
                     images: [{
+                        name: "plot.png",
                         type: "image/png",
                         data: base64Data,
                     }],
@@ -219,6 +220,7 @@ export class PythonExecutor {
 
             if (fileName.match(/\.(png|jpg|jpeg|gif)$/i)) {
                 images.push({
+                    name: fileName,
                     type: "image/png",
                     data: base64
                 });

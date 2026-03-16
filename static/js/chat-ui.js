@@ -272,7 +272,7 @@ function renderHistory() {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
         const isPythonIndicator = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
         const isThought = typeof msg.displayText === 'string' && msg.displayText.includes('thinking-details');
-        const isHtml = isPythonIndicator || isThought;
+        const isHtml = msg.isHtml === true || isPythonIndicator || isThought;
         const msgText = msg.parts[0].text || '';
         const isSystemCodeResult = msgText.startsWith('(System: Code execution result)');
         const isPythonResult = (msgText === '' || isSystemCodeResult) && typeof msg.displayText === 'string' && msg.displayText.includes('Python 執行結果');

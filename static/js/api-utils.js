@@ -138,7 +138,7 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
                             if (part.text || part.thought) {
                                 let isThought = !!part.thought;
                                 let thoughtSummary = "";
-                                
+
                                 if (typeof part.thought === 'object' && part.thought !== null) {
                                     isThought = true;
                                     thoughtSummary = part.thought.summary || "";
@@ -146,8 +146,8 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
                                     thoughtSummary = part.thought_title;
                                 }
 
-                                onChunk({ 
-                                    text: part.text || (typeof part.thought === 'string' ? part.thought : ""), 
+                                onChunk({
+                                    text: part.text || (typeof part.thought === 'string' ? part.thought : ""),
                                     isThought: isThought,
                                     thoughtSummary: thoughtSummary
                                 });

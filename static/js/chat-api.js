@@ -222,13 +222,13 @@ async function regenerateMessage(modelMessageIndex) {
                 if (beforePythonText) {
                     const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
-                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
+                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay, isHtml: true };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, true, false, true);
 
                     if (currentUser && activeConvId) {
                         const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
-                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay);
+                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay, true);
                         textBeforeMsg.messageId = beforeMsgId;
                         if (isFirstPair && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, userText, beforePythonText);
@@ -285,7 +285,7 @@ async function regenerateMessage(modelMessageIndex) {
 
                 if (currentUser && activeConvId) {
                     const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
-                    const msgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay);
+                    const msgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay, true);
                     newModelMsg.messageId = msgId;
                 }
 
@@ -307,15 +307,23 @@ async function regenerateMessage(modelMessageIndex) {
 
                 let outputDisplay = `**Python 執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
                 let textForModel = `**Python 執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
+                let fileSummary = "";
+
                 if (resultImages.length > 0) {
+                    fileSummary += `\n\n**產生的圖片:**\n` + resultImages.map(img => `- ${img.name || 'plot.png'} (${formatBytes(getBase64Size(img.data))})`).join('\n');
                     const imgTags = resultImages.map(img => `<img src="data:${img.type};base64,${img.data}" alt="Plot">`).join('');
                     outputDisplay += `\n\n<div class="image-gallery">${imgTags}</div>`;
                 }
                 if (resultFiles.length > 0) {
+                    fileSummary += `\n\n**產生的檔案:**\n` + resultFiles.map(file => `- ${file.name} (${formatBytes(getBase64Size(file.data))})`).join('\n');
                     const fileHtml = resultFiles.map(file =>
                         `<div style="margin-top:8px;"><a href="data:${file.type};base64,${file.data}" download="${file.name}" style="text-decoration:none; color:var(--accent-strong); display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border:1px solid var(--accent-strong); border-radius:8px; transition:all 0.2s; background:rgba(255,255,255,0.02);">${DOWNLOAD_FILE_ICON} 下載檔案：${file.name}</a></div>`
                     ).join('');
                     outputDisplay += `\n\n**產生的檔案:**\n${fileHtml}`;
+                }
+
+                if (fileSummary) {
+                    textForModel += fileSummary;
                 }
 
                 const userFeedbackMsg = {
@@ -328,7 +336,7 @@ async function regenerateMessage(modelMessageIndex) {
                 renderMessage("model", "", false, outputDisplay, history.length - 1, false, true, false, true);
 
                 if (currentUser && activeConvId) {
-                    const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay);
+                    const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay, false);
                     userFeedbackMsg.messageId = resultMsgId;
                 }
 
@@ -339,13 +347,13 @@ async function regenerateMessage(modelMessageIndex) {
                 const finalParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
                 const finalDisplay = thoughtHtml + markdownToHtml(responseText);
                 const finalCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
-                const newModelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: !!thoughtText };
+                const newModelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: true };
                 history.push(newModelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, finalDisplay, history.length - 1, !!thoughtText, false);
+                renderMessage("model", responseText, false, finalDisplay, history.length - 1, true, false);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay);
+                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay, true);
                     newModelMsg.messageId = msgId;
 
                     if (isFirstPair && !isAborted) {
@@ -416,11 +424,10 @@ async function sendMessage() {
 
     try {
         if (currentUser && activeConvId) {
-            const userMsgId = await addMessage(activeConvId, "user", composedText, text);
+            const userMsgId = await addMessage(activeConvId, "user", composedText, text, false);
             userMsg.messageId = userMsgId;
             await updateConversationTitleIfEmpty(activeConvId, text);
         }
-
         let keepGoing = true;
         let loopCount = 0;
         let isAborted = false;
@@ -584,13 +591,13 @@ async function sendMessage() {
                 if (beforePythonText) {
                     const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
-                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
+                    const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay, isHtml: true };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, true, false, true);
 
                     if (currentUser && activeConvId) {
                         const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
-                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay);
+                        const beforeMsgId = await addMessage(activeConvId, "model", combinedContent, beforeDisplay, true);
                         textBeforeMsg.messageId = beforeMsgId;
                         if (isFirstMessageTurn && !isAborted) {
                             await generateAndSetConversationTitle(activeConvId, text, beforePythonText);
@@ -648,7 +655,7 @@ async function sendMessage() {
 
                 if (currentUser && activeConvId) {
                     const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
-                    const pyMsgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay);
+                    const pyMsgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay, true);
                     modelMsg.messageId = pyMsgId;
                 }
 
@@ -670,16 +677,24 @@ async function sendMessage() {
 
                 let outputDisplay = `**Python 執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
                 let textForModel = `**Python 執行結果:**\n\`\`\`\n${resultLogs}\n\`\`\``;
+                let fileSummary = "";
+
                 if (resultImages.length > 0) {
+                    fileSummary += `\n\n**產生的圖片:**\n` + resultImages.map(img => `- ${img.name || 'plot.png'} (${formatBytes(getBase64Size(img.data))})`).join('\n');
                     const imgTags = resultImages.map(img => `<img src="data:${img.type};base64,${img.data}" alt="Plot">`).join('');
                     outputDisplay += `\n\n<div class="image-gallery">${imgTags}</div>`;
                 }
 
                 if (resultFiles.length > 0) {
+                    fileSummary += `\n\n**產生的檔案:**\n` + resultFiles.map(file => `- ${file.name} (${formatBytes(getBase64Size(file.data))})`).join('\n');
                     const fileHtml = resultFiles.map(file =>
                         `<div style="margin-top:8px;"><a href="data:${file.type};base64,${file.data}" download="${file.name}" style="text-decoration:none; color:var(--accent-strong); display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border:1px solid var(--accent-strong); border-radius:8px; transition:all 0.2s; background:rgba(255,255,255,0.02);">${DOWNLOAD_FILE_ICON}${file.name}</a></div>`
                     ).join('');
                     outputDisplay += `\n\n**產生的檔案:**\n${fileHtml}`;
+                }
+
+                if (fileSummary) {
+                    textForModel += fileSummary;
                 }
 
                 const userFeedbackMsg = {
@@ -693,7 +708,7 @@ async function sendMessage() {
                 renderMessage("model", "", false, outputDisplay, history.length - 1, false, true, false, true);
 
                 if (currentUser && activeConvId) {
-                    const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay);
+                    const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay, false);
                     userFeedbackMsg.messageId = resultMsgId;
                 }
 
@@ -704,13 +719,13 @@ async function sendMessage() {
                 const finalParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
                 const finalDisplay = thoughtHtml + markdownToHtml(responseText);
                 const finalCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
-                const modelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: !!thoughtText };
+                const modelMsg = { role: "model", parts: finalParts, displayText: finalDisplay, isHtml: true };
                 history.push(modelMsg);
                 removeLoading(loadingId);
-                renderMessage("model", responseText, false, finalDisplay, history.length - 1, !!thoughtText, false);
+                renderMessage("model", responseText, false, finalDisplay, history.length - 1, true, false);
 
                 if (currentUser && activeConvId) {
-                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay);
+                    const msgId = await addMessage(activeConvId, "model", finalCombinedContent, finalDisplay, true);
                     modelMsg.messageId = msgId;
 
                     if (isFirstMessageTurn && !isAborted) {

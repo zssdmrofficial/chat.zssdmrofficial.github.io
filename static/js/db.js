@@ -112,7 +112,13 @@ async function loadMessages(convId) {
             const data = d.data();
             const content = data.content || '';
             const displayText = data.displayContent || content;
-            return { role: data.role, parts: [{ text: content }], displayText, messageId: d.id };
+            return {
+                role: data.role,
+                parts: [{ text: content }],
+                displayText,
+                messageId: d.id,
+                isHtml: data.isHtml === true
+            };
         });
         currentConversationId = convId;
         renderHistory();
@@ -123,7 +129,7 @@ async function loadMessages(convId) {
     }
 }
 
-async function addMessage(convId, role, content, displayContent = null) {
+async function addMessage(convId, role, content, displayContent = null, isHtml = false) {
     if (!convId) return null;
     const user = auth.currentUser;
     if (!user) return null;
@@ -133,6 +139,7 @@ async function addMessage(convId, role, content, displayContent = null) {
             role,
             content,
             displayContent: displayContent || content,
+            isHtml,
             userId: user.uid,
             ts: firebase.firestore.FieldValue.serverTimestamp(),
         });
