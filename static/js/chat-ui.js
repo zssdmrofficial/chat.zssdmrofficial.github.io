@@ -305,7 +305,6 @@ function renderHistory() {
             }
             if (!isLastRegenerableInTurn) {
                 hideRegen = true;
-                shouldHideActions = true; // Also hide copy button for intermediate messages
             }
         } else if (renderRole === 'model') {
             hideRegen = true;

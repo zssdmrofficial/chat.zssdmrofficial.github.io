@@ -224,13 +224,7 @@ async function regenerateMessage(modelMessageIndex) {
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
                     const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, true, true);
-
-                    let lastMsgWrapper = chatBoxEl.lastElementChild;
-                    if (lastMsgWrapper) {
-                        let footer = lastMsgWrapper.querySelector(".message-footer");
-                        if (footer) footer.remove();
-                    }
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
 
                     if (currentUser && activeConvId) {
                         const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
@@ -592,13 +586,7 @@ async function sendMessage() {
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
                     const textBeforeMsg = { role: "model", parts: beforeParts, displayText: beforeDisplay };
                     history.push(textBeforeMsg);
-                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, true, true);
-
-                    let lastMsgWrapper = chatBoxEl.lastElementChild;
-                    if (lastMsgWrapper) {
-                        let footer = lastMsgWrapper.querySelector(".message-footer");
-                        if (footer) footer.remove();
-                    }
+                    renderMessage("model", beforePythonText, false, beforeDisplay, history.length - 1, !!thoughtText, false, true);
 
                     if (currentUser && activeConvId) {
                         const combinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${beforePythonText}` : beforePythonText;
