@@ -1,32 +1,4 @@
-async function showCooldownCountdown(seconds, loadingId) {
-    return new Promise((resolve) => {
-        let remaining = seconds;
-        const loadingEl = document.getElementById(loadingId);
-        const contentEl = loadingEl?.querySelector('.text-content');
-        const originalHtml = contentEl ? contentEl.innerHTML : '';
-
-        console.log(`[COOLDOWN] 進入冷卻，總共 ${seconds} 秒`);
-
-        const timer = setInterval(() => {
-            if (contentEl) {
-                contentEl.innerHTML = `<i>思想小助手回應中... (等待 ${remaining} 秒冷卻)</i>`;
-            }
-            console.log(`[COOLDOWN] 剩餘 ${remaining} 秒`);
-            remaining--;
-
-            if (remaining <= 0) {
-                clearInterval(timer);
-                if (contentEl) {
-                    contentEl.innerHTML = originalHtml;
-                }
-                console.log(`[COOLDOWN] 冷卻結束，準備重試 API`);
-                resolve();
-            }
-        }, 1000);
-    });
-}
-
-async function callApiWithRetry(body, loadingId, maxRetries = 5) {
+async function callApiWithRetry(body, maxRetries = 5) {
     let attempt = 0;
     while (attempt < maxRetries) {
         attempt++;
@@ -39,33 +11,9 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
                 body: JSON.stringify(body),
             });
 
-            if (res.status === 503) {
-                console.warn(`[API] 503 超載，第 ${attempt} 次 → 立即重試`);
-                continue;
-            }
-
-            if (res.status === 429) {
-                let retryAfter = parseInt(res.headers.get("Retry-After") || "0", 10);
-
-                if (!retryAfter) {
-                    const errData = await res.json().catch(() => ({}));
-                    const msg = errData?.error?.message || "";
-                    const match = msg.match(/retry in ([\d.]+)s/i);
-                    if (match) retryAfter = Math.ceil(parseFloat(match[1]));
-                }
-
-                if (!retryAfter) retryAfter = 5 * attempt;
-
-                console.warn(`[API] 429 配額超限 → 等待 ${retryAfter} 秒再重試 (第 ${attempt} 次)`);
-
-                await showCooldownCountdown(retryAfter, loadingId);
-
-                continue;
-            }
-
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
-                console.error(`[API] 非 503/429 錯誤: ${res.status}`, err);
+                console.error(`[API] 錯誤: ${res.status}`, err);
 
                 if (res.status === 400) {
                     const errorMsg = err?.error?.message || `HTTP ${res.status}`;
@@ -90,7 +38,7 @@ async function callApiWithRetry(body, loadingId, maxRetries = 5) {
     throw new Error("已達最大重試次數仍失敗");
 }
 
-async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, signal = null) {
+async function callApiStreamWithRetry(body, onChunk, maxRetries = 5, signal = null) {
     let attempt = 0;
     while (attempt < maxRetries) {
         attempt++;
@@ -106,14 +54,6 @@ async function callApiStreamWithRetry(body, loadingId, onChunk, maxRetries = 5, 
                 body: JSON.stringify(body),
                 signal: signal
             });
-
-            if (res.status === 503) continue;
-            if (res.status === 429) {
-                let retryAfter = parseInt(res.headers.get("Retry-After") || "0", 10);
-                if (!retryAfter) retryAfter = 5 * attempt;
-                await showCooldownCountdown(retryAfter, loadingId);
-                continue;
-            }
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));

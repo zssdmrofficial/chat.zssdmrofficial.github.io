@@ -106,7 +106,7 @@ async function regenerateMessage(modelMessageIndex) {
             let thoughtDetailsEl = null;
 
             try {
-                await callApiStreamWithRetry(requestBody, loadingId, (chunk) => {
+                await callApiStreamWithRetry(requestBody, (chunk) => {
                     const textChunk = typeof chunk === 'string' ? chunk : chunk.text;
                     const isThought = typeof chunk === 'object' && chunk.isThought;
 
@@ -474,7 +474,7 @@ async function sendMessage() {
             let thoughtDetailsEl = null;
 
             try {
-                await callApiStreamWithRetry(requestBody, loadingId, (chunk) => {
+                await callApiStreamWithRetry(requestBody, (chunk) => {
                     const textChunk = typeof chunk === 'string' ? chunk : chunk.text;
                     const isThought = typeof chunk === 'object' && chunk.isThought;
 

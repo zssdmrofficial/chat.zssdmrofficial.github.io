@@ -177,7 +177,7 @@ async function generateAndSetConversationTitle(convId, userText, modelText) {
             contents: [{ role: "user", parts: [{ text: prompt }] }]
         };
 
-        const data = await callApiWithRetry(requestBody, null, 3);
+        const data = await callApiWithRetry(requestBody, 3);
         const candidate = data?.candidates?.[0];
         const part = candidate?.content?.parts?.[0];
 
