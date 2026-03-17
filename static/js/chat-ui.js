@@ -276,6 +276,7 @@ function renderHistory() {
     chatBoxEl.classList.add('settings-fade-in');
     history.forEach((msg, index) => {
         if (msg.role === 'user' && msg.parts[0].text === SYSTEM_INSTRUCTION) return;
+        if (msg.isHidden) return;
         const isPythonIndicator = typeof msg.displayText === 'string' && msg.displayText.includes('python-analysis-indicator');
         const isThought = typeof msg.displayText === 'string' && msg.displayText.includes('thinking-details');
         const isHtml = msg.isHtml === true || isPythonIndicator || isThought;

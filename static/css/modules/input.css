@@ -85,6 +85,19 @@
     transition: all 0.2s ease;
 }
 
+.tool-pill.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tool-pill.disabled:hover {
+    color: var(--text-secondary);
+    border-color: var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
 .tool-pill:hover {
     color: var(--text-primary);
     border-color: color-mix(in srgb, var(--accent-color) 40%, white 10%);

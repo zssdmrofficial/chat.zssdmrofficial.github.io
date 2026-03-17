@@ -65,8 +65,16 @@ async function regenerateMessage(modelMessageIndex) {
         while (keepGoing) {
             loopCount++;
 
+            let finalSystemPrompt = SYSTEM_INSTRUCTION;
+            if (isPythonEnabled) {
+                finalSystemPrompt += "\n" + PYTHON_SYSTEM_PROMPT_ADDITION;
+            }
+            if (isSearchEnabled) {
+                finalSystemPrompt += "\n" + SEARCH_SYSTEM_PROMPT_ADDITION;
+            }
+
             let payloadHistory = [
-                { role: "user", parts: [{ text: isPythonEnabled ? (SYSTEM_INSTRUCTION + "\n" + CUSTOM_SYSTEM_PROMPT_ADDITION) : SYSTEM_INSTRUCTION }] },
+                { role: "user", parts: [{ text: finalSystemPrompt }] },
                 ...history.map(msg => {
                     const sanitizedParts = msg.parts.map(p => {
                         if (p.thought) {
@@ -209,16 +217,18 @@ async function regenerateMessage(modelMessageIndex) {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const thoughtText = currentThoughtText;
-            const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
+            const pythonMatch = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
+            const searchMatch = isSearchEnabled ? responseText.match(SEARCH_BLOCK_REGEX) : null;
 
-            const isValidPython = keepGoing && match && pythonExecutorInstance;
+            const isValidPython = keepGoing && pythonMatch && pythonExecutorInstance;
+            const isValidSearch = keepGoing && searchMatch;
 
             let thoughtHtml = "";
             if (thoughtText) {
                 thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
             }
 
-            if (hasEncounteredPython && isValidPython) {
+            if (hasEncounteredPython && (isValidPython || isValidSearch)) {
                 if (beforePythonText) {
                     const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
@@ -238,7 +248,7 @@ async function regenerateMessage(modelMessageIndex) {
             }
 
             if (isValidPython) {
-                const code = match[1];
+                const code = pythonMatch[1];
                 const indicatorId = `py-exec-${Date.now()}`;
                 const escapedCode = escapeHtml(code);
                 const pythonAnalysisHtml = `
@@ -343,6 +353,76 @@ async function regenerateMessage(modelMessageIndex) {
                 loadingId = showLoading();
                 continue;
 
+            } else if (isValidSearch) {
+                const query = searchMatch[1].trim();
+
+                const indicatorId = `search-exec-${Date.now()}`;
+                const escapedQuery = escapeHtml(query);
+                const searchIndicatorHtml = `
+                    <div class="python-analysis-indicator" id="${indicatorId}">
+                        <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
+                            <div class="status-text">
+                                ${SEARCH_TOOL_ICON}
+                                <span>模型正在使用 DuckDuckGo 搜尋</span>
+                            </div>
+                            <div class="python-analysis-actions">
+                                <div class="status-icon">
+                                    ${CHEVRON_DOWN_ICON}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="python-analysis-code">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span>search query</span>
+                                </div>
+                                <pre><code>${escapedQuery}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const pyParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                let pyDisplay = searchIndicatorHtml;
+                if (!beforePythonText && thoughtHtml) {
+                    pyDisplay = thoughtHtml + pyDisplay;
+                }
+
+                const newModelMsg = { role: "model", parts: pyParts, displayText: pyDisplay, isHtml: true };
+                history.push(newModelMsg);
+                renderMessage("model", responseText, false, pyDisplay, history.length - 1, true, true);
+
+                if (currentUser && activeConvId) {
+                    const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                    const msgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay, true);
+                    newModelMsg.messageId = msgId;
+                }
+
+                let searchContext = "";
+                const execLoadingId = showLoading();
+                try {
+                    searchContext = await buildSearchContextPayload(query);
+                    if (!searchContext) searchContext = "搜尋無結果。";
+                } catch (err) {
+                    searchContext = `搜尋失敗: ${err.message}`;
+                } finally {
+                    removeLoading(execLoadingId);
+                }
+
+                let textForModel = searchContext;
+
+                const userFeedbackMsg = {
+                    role: "user",
+                    parts: [{ text: textForModel }],
+                    displayText: "",
+                    messageId: null,
+                    isHidden: true
+                };
+                history.push(userFeedbackMsg);
+
+                loadingId = showLoading();
+                continue;
+
             } else {
                 const finalParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
                 const finalDisplay = thoughtHtml + markdownToHtml(responseText);
@@ -394,9 +474,14 @@ async function sendMessage() {
     const isFirstMessageTurn = history.length === 0;
 
     const toolContext = buildToolContextPayload();
-    const composedText = toolContext
+    let composedText = toolContext
         ? `【工具資訊】\n${toolContext}\n\n【使用者提問】\n${text}`
         : text;
+
+    if (isSearchEnabled && forceSearchNextTurn) {
+        composedText += "\n\n【系統強制指令】：使用者已按下「強制搜尋」按鈕，要求你必須使用網路搜尋。請你**務必**優先輸出 `execute-search` 程式碼區塊來查詢相關資訊，取得搜尋結果後再回答問題，請勿未經搜尋直接回答。";
+        forceSearchNextTurn = false;
+    }
 
     if (currentUser && !currentConversationId) {
         const newId = await createConversation(DEFAULT_CHAT_TITLE);
@@ -435,8 +520,16 @@ async function sendMessage() {
         while (keepGoing) {
             loopCount++;
 
+            let finalSystemPrompt = SYSTEM_INSTRUCTION;
+            if (isPythonEnabled) {
+                finalSystemPrompt += "\n" + PYTHON_SYSTEM_PROMPT_ADDITION;
+            }
+            if (isSearchEnabled) {
+                finalSystemPrompt += "\n" + SEARCH_SYSTEM_PROMPT_ADDITION;
+            }
+
             let payloadHistory = [
-                { role: "user", parts: [{ text: isPythonEnabled ? (SYSTEM_INSTRUCTION + "\n" + CUSTOM_SYSTEM_PROMPT_ADDITION) : SYSTEM_INSTRUCTION }] },
+                { role: "user", parts: [{ text: finalSystemPrompt }] },
                 ...history.map(msg => {
                     const sanitizedParts = msg.parts.map(p => {
                         if (p.functionCall) {
@@ -578,16 +671,18 @@ async function sendMessage() {
             if (streamMsgDiv) streamMsgDiv.remove();
             const responseText = currentResponseText;
             const thoughtText = currentThoughtText;
-            const match = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
+            const pythonMatch = isPythonEnabled ? responseText.match(PYTHON_BLOCK_REGEX) : null;
+            const searchMatch = isSearchEnabled ? responseText.match(SEARCH_BLOCK_REGEX) : null;
 
-            const isValidPython = keepGoing && match && pythonExecutorInstance;
+            const isValidPython = keepGoing && pythonMatch && pythonExecutorInstance;
+            const isValidSearch = keepGoing && searchMatch;
 
             let thoughtHtml = "";
             if (thoughtText) {
                 thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
             }
 
-            if (hasEncounteredPython && isValidPython) {
+            if (hasEncounteredPython && (isValidPython || isValidSearch)) {
                 if (beforePythonText) {
                     const beforeParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: beforePythonText }] : [{ text: beforePythonText }];
                     const beforeDisplay = thoughtHtml + markdownToHtml(beforePythonText);
@@ -607,7 +702,7 @@ async function sendMessage() {
             }
 
             if (isValidPython) {
-                const code = match[1];
+                const code = pythonMatch[1];
 
                 const indicatorId = `py-exec-${Date.now()}`;
                 const escapedCode = escapeHtml(code);
@@ -711,6 +806,76 @@ async function sendMessage() {
                     const resultMsgId = await addMessage(activeConvId, "model", "", outputDisplay, false);
                     userFeedbackMsg.messageId = resultMsgId;
                 }
+
+                loadingId = showLoading();
+                continue;
+
+            } else if (isValidSearch) {
+                const query = searchMatch[1].trim();
+
+                const indicatorId = `search-exec-${Date.now()}`;
+                const escapedQuery = escapeHtml(query);
+                const searchIndicatorHtml = `
+                    <div class="python-analysis-indicator" id="${indicatorId}">
+                        <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
+                            <div class="status-text">
+                                ${SEARCH_TOOL_ICON}
+                                <span>模型正在使用 DuckDuckGo 搜尋</span>
+                            </div>
+                            <div class="python-analysis-actions">
+                                <div class="status-icon">
+                                    ${CHEVRON_DOWN_ICON}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="python-analysis-code">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span>search query</span>
+                                </div>
+                                <pre><code>${escapedQuery}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const pyParts = thoughtText ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }] : [{ text: responseText }];
+                let pyDisplay = searchIndicatorHtml;
+                if (!beforePythonText && thoughtHtml) {
+                    pyDisplay = thoughtHtml + pyDisplay;
+                }
+
+                const newModelMsg = { role: "model", parts: pyParts, displayText: pyDisplay, isHtml: true };
+                history.push(newModelMsg);
+                renderMessage("model", responseText, false, pyDisplay, history.length - 1, true, true);
+
+                if (currentUser && activeConvId) {
+                    const pyCombinedContent = thoughtText ? `[Thinking]\n${thoughtText}\n\n${responseText}` : responseText;
+                    const msgId = await addMessage(activeConvId, "model", pyCombinedContent, pyDisplay, true);
+                    newModelMsg.messageId = msgId;
+                }
+
+                let searchContext = "";
+                const execLoadingId = showLoading();
+                try {
+                    searchContext = await buildSearchContextPayload(query);
+                    if (!searchContext) searchContext = "搜尋無結果。";
+                } catch (err) {
+                    searchContext = `搜尋失敗: ${err.message}`;
+                } finally {
+                    removeLoading(execLoadingId);
+                }
+
+                let textForModel = searchContext;
+
+                const userFeedbackMsg = {
+                    role: "user",
+                    parts: [{ text: textForModel }],
+                    displayText: "",
+                    messageId: null,
+                    isHidden: true
+                };
+                history.push(userFeedbackMsg);
 
                 loadingId = showLoading();
                 continue;

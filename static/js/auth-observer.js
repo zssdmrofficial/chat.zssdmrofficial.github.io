@@ -12,21 +12,31 @@ auth.onAuthStateChanged(async (user) => {
                 if (typeof data.isPythonEnabled !== 'undefined') {
                     isPythonEnabled = data.isPythonEnabled;
                 }
+                if (typeof data.isSearchEnabled !== 'undefined') {
+                    isSearchEnabled = data.isSearchEnabled;
+                } else {
+                    isSearchEnabled = false;
+                }
             } else {
                 isPythonEnabled = true;
+                isSearchEnabled = false;
             }
         } catch (e) {
             console.warn('讀取使用者設定失敗', e);
         }
 
         await loadConversations(user.uid);
+        updateSearchPillState();
         updateSendButtonState();
     } else {
         setAuthHint('未登入：對話不會被儲存');
         isPythonEnabled = true;
+        isSearchEnabled = false;
+        forceSearchNextTurn = false;
         clearHistoryList();
         currentConversationId = null;
         closeMobileSidebar();
+        updateSearchPillState();
         updateSendButtonState();
     }
 });

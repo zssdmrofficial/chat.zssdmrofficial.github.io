@@ -156,6 +156,16 @@ function showSettingsModal() {
                                 <span class="slider"></span>
                             </label>
                         </div>
+                        <div class="settings-item">
+                            <div class="settings-item-info">
+                                <div class="settings-item-label">搜尋功能</div>
+                                <div class="settings-item-desc">啟用後可透過 DuckDuckGo 進行網路搜尋。</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="search-toggle" ${isSearchEnabled ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="settings-section" id="tab-privacy">
@@ -230,6 +240,24 @@ function showSettingsModal() {
             }
         }
         setAuthHint(`Python 執行工具已${isPythonEnabled ? '啟用' : '停用'}`);
+    };
+
+    overlay.querySelector('#search-toggle').onchange = async (e) => {
+        isSearchEnabled = e.target.checked;
+        if (!isSearchEnabled) {
+            forceSearchNextTurn = false;
+        }
+        if (currentUser) {
+            try {
+                await db.collection('userSettings').doc(currentUser.uid).set({
+                    isSearchEnabled: isSearchEnabled
+                }, { merge: true });
+            } catch (err) {
+                console.error('儲存搜尋設定失敗', err);
+            }
+        }
+        updateSearchPillState();
+        setAuthHint(`搜尋功能已${isSearchEnabled ? '啟用' : '停用'}`);
     };
 
     overlay.querySelector('#delete-all-btn').onclick = async () => {

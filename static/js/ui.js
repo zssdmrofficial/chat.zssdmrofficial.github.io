@@ -44,6 +44,11 @@ function renderPromptTools() {
     updatePromptToolBlockVisibility();
     promptToolsListEl.innerHTML = '';
 
+    const searchWrapper = renderSearchPill();
+    if (searchWrapper) {
+        promptToolsListEl.appendChild(searchWrapper);
+    }
+
     const promptWrapper = document.createElement('div');
     promptWrapper.className = 'prompt-pill-wrapper';
 
@@ -98,6 +103,7 @@ function renderPromptTools() {
 
     renderThinkingPill();
     updatePromptToolsCounter();
+    updateSearchPillState();
 }
 
 function renderThinkingPill() {
@@ -153,6 +159,57 @@ function renderThinkingPill() {
     promptToolsListEl.prepend(wrapper);
 }
 
+function getSearchPillLabel() {
+    return '搜尋';
+}
+
+function updateSearchPillState() {
+    const pill = document.getElementById('force-search-pill');
+    if (!pill) return;
+    if (!isSearchEnabled && forceSearchNextTurn) {
+        forceSearchNextTurn = false;
+    }
+    const disabled = !isSearchEnabled || isAwaitingResponse;
+    pill.disabled = disabled;
+    pill.setAttribute('aria-disabled', disabled.toString());
+    pill.setAttribute('aria-pressed', forceSearchNextTurn.toString());
+    pill.classList.toggle('active', forceSearchNextTurn);
+    pill.classList.toggle('disabled', disabled);
+    const labelEl = pill.querySelector('.tool-pill-label');
+    if (labelEl && labelEl.textContent !== getSearchPillLabel()) {
+        labelEl.textContent = getSearchPillLabel();
+    }
+    if (pill.hasAttribute('title')) {
+        pill.removeAttribute('title');
+    }
+}
+
+function renderSearchPill() {
+    if (!promptToolsListEl) return null;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'search-pill-wrapper';
+
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'tool-pill search-pill';
+    pill.id = 'force-search-pill';
+    pill.innerHTML = `
+        <div class="tool-pill-icon">${SEARCH_TOOL_ICON}</div>
+        <span class="tool-pill-label">${getSearchPillLabel()}</span>
+        <div class="tool-pill-remove">${TOOL_PILL_REMOVE_ICON}</div>
+    `;
+
+    pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isSearchEnabled || isAwaitingResponse) return;
+        forceSearchNextTurn = !forceSearchNextTurn;
+        updateSearchPillState();
+    });
+
+    wrapper.appendChild(pill);
+    return wrapper;
+}
+
 
 function togglePromptTool(id) {
     if (activeToolIds.has(id)) {
@@ -198,6 +255,7 @@ function updateSendButtonState() {
     if (sendButtonEl.innerHTML.trim() !== iconMarkup.trim()) {
         sendButtonEl.innerHTML = iconMarkup;
     }
+    updateSearchPillState();
     adjustChatPadding();
 }
 
