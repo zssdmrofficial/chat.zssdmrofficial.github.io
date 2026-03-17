@@ -101,9 +101,16 @@ function renderPromptTools() {
         <span class="tool-pill-label">${getSearchPillLabel()}</span>
     `;
 
-    searchItem.addEventListener('click', (e) => {
+    searchItem.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!isSearchEnabled || isAwaitingResponse) return;
+        if (isAwaitingResponse) return;
+        if (!isSearchEnabled) {
+            const openSettings = await showConfirmModal('搜尋功能目前已停用，是否前往設定開啟？');
+            if (openSettings) {
+                showSettingsModal();
+            }
+            return;
+        }
         forceSearchNextTurn = !forceSearchNextTurn;
         updateSearchPillState();
         renderPromptTools();
@@ -241,12 +248,13 @@ function updateSearchPillState() {
         forceSearchNextTurn = false;
     }
     const disabled = !isSearchEnabled || isAwaitingResponse;
-    pill.disabled = disabled;
+    pill.disabled = isAwaitingResponse;
     pill.setAttribute('aria-disabled', disabled.toString());
     pill.setAttribute('aria-pressed', forceSearchNextTurn.toString());
     pill.classList.toggle('active', forceSearchNextTurn);
     pill.classList.toggle('selected', forceSearchNextTurn);
-    pill.classList.toggle('disabled', disabled);
+    pill.classList.toggle('disabled', isAwaitingResponse);
+    pill.classList.toggle('search-disabled', !isSearchEnabled);
     const labelEl = pill.querySelector('.tool-pill-label');
     if (labelEl && labelEl.textContent !== getSearchPillLabel()) {
         labelEl.textContent = getSearchPillLabel();

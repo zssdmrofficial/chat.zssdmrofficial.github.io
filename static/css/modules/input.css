@@ -309,9 +309,18 @@ button#send-button svg {
 }
 
 .thinking-dropdown-item:hover,
-.prompt-dropdown-item:hover {
+.prompt-dropdown-item:hover:not(.search-disabled) {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
+}
+
+.prompt-dropdown-item.search-disabled {
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.prompt-dropdown-item.search-disabled:hover {
+    background: transparent;
 }
 
 .thinking-dropdown-item.selected,
