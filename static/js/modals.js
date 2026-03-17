@@ -176,7 +176,7 @@ function showSettingsModal() {
                                 <div class="settings-item-label">刪除所有對話</div>
                                 <div class="settings-item-desc">清除此帳號下的所有對話歷史紀錄。</div>
                             </div>
-                            <button class="settings-btn danger" id="delete-all-btn">刪除全部</button>
+                            <button class="settings-btn danger" id="delete-all-btn" ${!conversationListEl || conversationListEl.querySelectorAll('.history-item').length === 0 ? 'disabled' : ''}>刪除全部</button>
                         </div>
                     </div>
                 </div>
