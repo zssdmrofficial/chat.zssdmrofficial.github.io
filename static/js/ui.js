@@ -39,15 +39,19 @@ function updatePromptToolBlockVisibility() {
     promptToolsBlockEl.style.display = '';
 }
 
+let isAttachedDataAccordionOpen = false;
+let isPromptDropdownOpen = false;
+
 function renderPromptTools() {
     if (!promptToolsListEl) return;
     updatePromptToolBlockVisibility();
-    promptToolsListEl.innerHTML = '';
 
-    const searchWrapper = renderSearchPill();
-    if (searchWrapper) {
-        promptToolsListEl.appendChild(searchWrapper);
+    const existingDropdown = promptToolsListEl.querySelector('.prompt-dropdown');
+    if (existingDropdown) {
+        isPromptDropdownOpen = existingDropdown.classList.contains('open');
     }
+
+    promptToolsListEl.innerHTML = '';
 
     const promptWrapper = document.createElement('div');
     promptWrapper.className = 'prompt-pill-wrapper';
@@ -55,12 +59,12 @@ function renderPromptTools() {
     const promptPill = document.createElement('button');
     promptPill.type = 'button';
     promptPill.className = 'tool-pill prompt-pill';
-    
-    const activeCount = activeToolIds.size;
-    const activeLabel = activeCount > 0 ? `附帶資料 (${activeCount})` : '附帶資料';
+
+    const activeCount = activeToolIds.size + (forceSearchNextTurn ? 1 : 0);
+    const activeLabel = activeCount > 0 ? `附加功能 (${activeCount})` : '附加功能';
 
     promptPill.innerHTML = `
-        <div class="tool-pill-icon">${DEFAULT_TOOL_PILL_ICON}</div>
+        <div class="tool-pill-icon">${ATTACH_TOOL_ICON}</div>
         <span class="tool-pill-label">${activeLabel}</span>
         <div class="prompt-pill-chevron">${CHEVRON_DOWN_ICON}</div>
     `;
@@ -72,18 +76,82 @@ function renderPromptTools() {
         document.querySelectorAll('.thinking-dropdown, .prompt-dropdown').forEach(d => d.classList.remove('open'));
         if (isOpening) {
             dropdown.classList.add('open');
+            isPromptDropdownOpen = true;
+        } else {
+            isPromptDropdownOpen = false;
         }
     });
 
     const promptDropdown = document.createElement('div');
     promptDropdown.className = 'prompt-dropdown';
+    if (isPromptDropdownOpen) {
+        promptDropdown.classList.add('open');
+    }
+
+    const searchItem = document.createElement('button');
+    searchItem.type = 'button';
+    searchItem.className = 'prompt-dropdown-item';
+    searchItem.id = 'force-search-pill';
+    if (forceSearchNextTurn) {
+        searchItem.classList.add('selected');
+    }
+
+    searchItem.innerHTML = `
+        <div class="tool-pill-icon">${SEARCH_TOOL_ICON}</div>
+        <span class="tool-pill-label">${getSearchPillLabel()}</span>
+    `;
+
+    searchItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isSearchEnabled || isAwaitingResponse) return;
+        forceSearchNextTurn = !forceSearchNextTurn;
+        updateSearchPillState();
+        renderPromptTools();
+    });
+    promptDropdown.appendChild(searchItem);
+
+    const divider = document.createElement('div');
+    divider.style.height = '1px';
+    divider.style.background = 'rgba(255, 255, 255, 0.1)';
+    divider.style.margin = '4px 0';
+    promptDropdown.appendChild(divider);
+
+    const accordionHeader = document.createElement('button');
+    accordionHeader.type = 'button';
+    accordionHeader.className = 'prompt-dropdown-item';
+    accordionHeader.style.justifyContent = 'space-between';
+
+    const attachCount = activeToolIds.size;
+    const attachLabel = attachCount > 0 ? `附帶資料 (${attachCount})` : '附帶資料';
+
+    accordionHeader.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="tool-pill-icon">${DEFAULT_TOOL_PILL_ICON}</div>
+            <span class="tool-pill-label">${attachLabel}</span>
+        </div>
+        <div class="accordion-chevron" style="transition: transform 0.2s; transform: ${isAttachedDataAccordionOpen ? 'rotate(180deg)' : 'rotate(0deg)'}">${CHEVRON_DOWN_ICON}</div>
+    `;
+
+    const accordionBody = document.createElement('div');
+    accordionBody.style.display = isAttachedDataAccordionOpen ? 'flex' : 'none';
+    accordionBody.style.flexDirection = 'column';
+    accordionBody.style.paddingLeft = '0px';
+    accordionBody.style.marginTop = '4px';
+    accordionBody.style.gap = '4px';
+
+    accordionHeader.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isAttachedDataAccordionOpen = accordionBody.style.display === 'none';
+        accordionBody.style.display = isAttachedDataAccordionOpen ? 'flex' : 'none';
+        accordionHeader.querySelector('.accordion-chevron').style.transform = isAttachedDataAccordionOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    });
 
     PROMPT_TOOLS.forEach(tool => {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'prompt-dropdown-item';
         if (activeToolIds.has(tool.id)) item.classList.add('selected');
-        
+
         const iconMarkup = getToolIconMarkup(tool);
         item.innerHTML = `
             <div class="tool-pill-icon">${iconMarkup}</div>
@@ -94,8 +162,11 @@ function renderPromptTools() {
             e.stopPropagation();
             togglePromptTool(tool.id);
         });
-        promptDropdown.appendChild(item);
+        accordionBody.appendChild(item);
     });
+
+    promptDropdown.appendChild(accordionHeader);
+    promptDropdown.appendChild(accordionBody);
 
     promptWrapper.appendChild(promptPill);
     promptWrapper.appendChild(promptDropdown);
@@ -174,6 +245,7 @@ function updateSearchPillState() {
     pill.setAttribute('aria-disabled', disabled.toString());
     pill.setAttribute('aria-pressed', forceSearchNextTurn.toString());
     pill.classList.toggle('active', forceSearchNextTurn);
+    pill.classList.toggle('selected', forceSearchNextTurn);
     pill.classList.toggle('disabled', disabled);
     const labelEl = pill.querySelector('.tool-pill-label');
     if (labelEl && labelEl.textContent !== getSearchPillLabel()) {
@@ -182,32 +254,6 @@ function updateSearchPillState() {
     if (pill.hasAttribute('title')) {
         pill.removeAttribute('title');
     }
-}
-
-function renderSearchPill() {
-    if (!promptToolsListEl) return null;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'search-pill-wrapper';
-
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.className = 'tool-pill search-pill';
-    pill.id = 'force-search-pill';
-    pill.innerHTML = `
-        <div class="tool-pill-icon">${SEARCH_TOOL_ICON}</div>
-        <span class="tool-pill-label">${getSearchPillLabel()}</span>
-        <div class="tool-pill-remove">${TOOL_PILL_REMOVE_ICON}</div>
-    `;
-
-    pill.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!isSearchEnabled || isAwaitingResponse) return;
-        forceSearchNextTurn = !forceSearchNextTurn;
-        updateSearchPillState();
-    });
-
-    wrapper.appendChild(pill);
-    return wrapper;
 }
 
 
