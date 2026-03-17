@@ -104,6 +104,15 @@ function renderPromptTools() {
     searchItem.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (isAwaitingResponse) return;
+
+        if (!currentUser && (!window.auth || !auth.currentUser)) {
+            const goToLogin = await showConfirmModal('搜尋功能需要登入才能使用，是否前往註冊/登入?');
+            if (goToLogin) {
+                window.location.href = 'login.html';
+            }
+            return;
+        }
+
         if (!isSearchEnabled) {
             const openSettings = await showConfirmModal('搜尋功能目前已停用，是否前往設定開啟？');
             if (openSettings) {

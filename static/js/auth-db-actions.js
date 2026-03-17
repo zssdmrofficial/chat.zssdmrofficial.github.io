@@ -243,6 +243,7 @@ async function handleSignOut() {
         setAuthHint('已登出');
         clearAuthFields(true);
         closeMobileSidebar();
+        window.location.reload();
     } catch (e) {
         console.error(e);
         setAuthHint('登出失敗', true);
