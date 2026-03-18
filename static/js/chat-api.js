@@ -21,6 +21,10 @@ async function regenerateMessage(modelMessageIndex) {
   while (userMsgIndex >= 0) {
     const candidate = history[userMsgIndex];
     if (candidate.role === 'user') {
+      if (candidate.isHidden) {
+        userMsgIndex--;
+        continue;
+      }
       const msgText = candidate.parts?.[0]?.text || '';
       const isSystemGenerated = msgText.startsWith(
         '(System: Code execution result)',
