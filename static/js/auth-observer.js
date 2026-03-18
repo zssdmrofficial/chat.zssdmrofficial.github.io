@@ -33,6 +33,8 @@ auth.onAuthStateChanged(async (user) => {
     isPythonEnabled = true;
     isSearchEnabled = false;
     forceSearchNextTurn = false;
+    isTempChatMode = false;
+    if (typeof updateTempChatBtnUI === 'function') updateTempChatBtnUI();
     clearHistoryList();
     currentConversationId = null;
     closeMobileSidebar();

@@ -483,6 +483,10 @@ function updateAuthUI(user) {
   setElementVisibility(signupBtn, !isLoggedIn);
   setElementVisibility(loginPageBtn, !isLoggedIn);
   setElementVisibility(logoutBtn, isLoggedIn);
+  
+  if (tempChatBtn) {
+    tempChatBtn.style.display = isLoggedIn ? 'flex' : 'none';
+  }
 
   if (authEmailEl) {
     authEmailEl.disabled = isLoggedIn;
