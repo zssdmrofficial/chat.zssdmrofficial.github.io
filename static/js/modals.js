@@ -372,11 +372,6 @@ function showChangePasswordModal() {
       newPwdEl.focus();
       return;
     }
-    if (newPwd.length < 6) {
-      errorEl.textContent = '新密碼長度至少需要 6 個字元';
-      newPwdEl.focus();
-      return;
-    }
     if (newPwd !== confirmPwd) {
       errorEl.textContent = '新密碼與確認密碼不一致';
       confirmPwdEl.focus();
