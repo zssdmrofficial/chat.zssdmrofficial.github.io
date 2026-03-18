@@ -245,14 +245,19 @@ function renderThinkingPill() {
     item.type = 'button';
     item.className = 'thinking-dropdown-item';
     if (currentThinkingLevel === level.value) item.classList.add('selected');
-    
+
     let iconSvg = '';
     if (level.value === 'MINIMAL') iconSvg = THINKING_ICON_LEVEL_MINIMAL;
     else if (level.value === 'LOW') iconSvg = THINKING_ICON_LEVEL_LOW;
     else if (level.value === 'MEDIUM') iconSvg = THINKING_ICON_LEVEL_MEDIUM;
     else if (level.value === 'HIGH') iconSvg = THINKING_ICON_LEVEL_HIGH;
 
-    item.innerHTML = '<div class="tool-pill-icon">' + iconSvg + '</div><span class="tool-pill-label">' + level.label + '</span>';
+    item.innerHTML =
+      '<div class="tool-pill-icon">' +
+      iconSvg +
+      '</div><span class="tool-pill-label">' +
+      level.label +
+      '</span>';
     item.addEventListener('click', (e) => {
       e.stopPropagation();
       currentThinkingLevel = level.value;
@@ -494,6 +499,45 @@ function updateAuthUI(user) {
 function clearChatUI() {
   chatBoxEl.innerHTML = '';
   history = [];
+}
+
+function updateTempChatBtnUI() {
+  if (tempChatBannerEl) {
+    tempChatBannerEl.style.display = isTempChatMode ? 'block' : 'none';
+  }
+  if (!tempChatBtn) return;
+  if (isTempChatMode) {
+    tempChatBtn.innerHTML = TEMP_CHAT_ICON_ENABLE;
+    tempChatBtn.style.color = 'var(--accent-glow)';
+    tempChatBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+  } else {
+    tempChatBtn.innerHTML = TEMP_CHAT_ICON;
+    tempChatBtn.style.color = 'var(--text-primary)';
+    tempChatBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+  }
+}
+
+async function toggleTempChatMode() {
+  if (isConversationActionLocked()) {
+    notifyConversationActionLocked('切換對話模式');
+    return;
+  }
+  isTempChatMode = !isTempChatMode;
+  updateTempChatBtnUI();
+
+  if (isTempChatMode) {
+    clearChatUI();
+    currentConversationId = null;
+    document
+      .querySelectorAll('.history-item')
+      .forEach((item) => item.classList.remove('active'));
+  } else {
+    clearChatUI();
+    currentConversationId = null;
+    if (currentUser) {
+      await loadConversations(currentUser.uid);
+    }
+  }
 }
 
 function clearHistoryList() {

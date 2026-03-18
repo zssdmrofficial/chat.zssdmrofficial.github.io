@@ -88,6 +88,10 @@ async function createConversation(title = DEFAULT_CHAT_TITLE) {
 }
 
 async function handleNewChat() {
+  if (isTempChatMode) {
+    isTempChatMode = false;
+    if (typeof updateTempChatBtnUI === 'function') updateTempChatBtnUI();
+  }
   if (!currentUser) {
     setAuthHint('請先登入再建立對話', true);
     return;
@@ -105,6 +109,10 @@ async function loadMessages(convId) {
   if (!user) {
     setAuthHint('請先登入再讀取對話', true);
     return;
+  }
+  if (isTempChatMode) {
+    isTempChatMode = false;
+    if (typeof updateTempChatBtnUI === 'function') updateTempChatBtnUI();
   }
   try {
     const snap = await db

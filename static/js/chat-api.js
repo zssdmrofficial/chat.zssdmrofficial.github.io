@@ -669,7 +669,7 @@ async function sendMessage() {
     forceSearchNextTurn = false;
   }
 
-  if (currentUser && !currentConversationId) {
+  if (currentUser && !currentConversationId && !isTempChatMode) {
     const newId = await createConversation(DEFAULT_CHAT_TITLE);
     if (!newId) return;
   }

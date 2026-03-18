@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (signupBtn) signupBtn.addEventListener('click', handleSignUp);
   if (logoutBtn) logoutBtn.addEventListener('click', handleSignOut);
   if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
+  if (tempChatBtn) {
+    tempChatBtn.addEventListener('click', toggleTempChatMode);
+    updateTempChatBtnUI();
+  }
   const userProfileBtn = document.getElementById('user-profile');
   if (userProfileBtn)
     userProfileBtn.addEventListener('click', showSettingsModal);
