@@ -483,7 +483,7 @@ function updateAuthUI(user) {
   setElementVisibility(signupBtn, !isLoggedIn);
   setElementVisibility(loginPageBtn, !isLoggedIn);
   setElementVisibility(logoutBtn, isLoggedIn);
-  
+
   if (tempChatBtn) {
     tempChatBtn.style.display = isLoggedIn ? 'flex' : 'none';
   }
@@ -512,12 +512,10 @@ function updateTempChatBtnUI() {
   if (!tempChatBtn) return;
   if (isTempChatMode) {
     tempChatBtn.innerHTML = TEMP_CHAT_ICON_ENABLE;
-    tempChatBtn.style.color = 'var(--accent-glow)';
-    tempChatBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+    tempChatBtn.classList.add('active');
   } else {
     tempChatBtn.innerHTML = TEMP_CHAT_ICON;
-    tempChatBtn.style.color = 'var(--text-primary)';
-    tempChatBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+    tempChatBtn.classList.remove('active');
   }
 }
 
