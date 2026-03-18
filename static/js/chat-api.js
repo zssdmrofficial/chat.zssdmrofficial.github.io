@@ -148,7 +148,7 @@ async function regenerateMessage(modelMessageIndex) {
                         if (!thoughtDetailsEl) {
                             thoughtDetailsEl = document.createElement('details');
                             thoughtDetailsEl.className = 'thinking-details';
-                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
                             textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
                         } else if (displayTitle) {
                             const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
@@ -225,7 +225,7 @@ async function regenerateMessage(modelMessageIndex) {
 
             let thoughtHtml = "";
             if (thoughtText) {
-                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
             }
 
             if (hasEncounteredPython && (isValidPython || isValidSearch)) {
@@ -261,7 +261,7 @@ async function regenerateMessage(modelMessageIndex) {
                             <div class="python-analysis-actions">
                                 <button type="button" class="copy-button" aria-label="複製程式碼">
                                     <span class="copy-btn-icon copy-btn-icon-default">${CODE_BLOCK_COPY_ICON}</span>
-                                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPIED_ICON}</span>
+                                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPY_SUCCESS_ICON}</span>
                                 </button>
                                 <div class="status-icon">
                                     ${CHEVRON_DOWN_ICON}
@@ -274,7 +274,7 @@ async function regenerateMessage(modelMessageIndex) {
                                     <span>python</span>
                                     <button type="button" class="copy-button" aria-label="複製程式碼">
                                         <span class="copy-btn-icon copy-btn-icon-default">${CODE_BLOCK_COPY_ICON}</span>
-                                        <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPIED_ICON}</span>
+                                        <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPY_SUCCESS_ICON}</span>
                                     </button>
                                 </div>
                                 <pre><code>${escapedCode}</code></pre>
@@ -602,7 +602,7 @@ async function sendMessage() {
                         if (!thoughtDetailsEl) {
                             thoughtDetailsEl = document.createElement('details');
                             thoughtDetailsEl.className = 'thinking-details';
-                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_TOOL_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
+                            thoughtDetailsEl.innerHTML = `<summary>${THINKING_ICON}<span class="thinking-title">${displayTitle}</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content"></div>`;
                             textContentEl.insertBefore(thoughtDetailsEl, textContentEl.firstChild);
                         } else if (displayTitle) {
                             const titleEl = thoughtDetailsEl.querySelector('.thinking-title');
@@ -679,7 +679,7 @@ async function sendMessage() {
 
             let thoughtHtml = "";
             if (thoughtText) {
-                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_TOOL_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
+                thoughtHtml = `<details class="thinking-details"><summary>${THINKING_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
             }
 
             if (hasEncounteredPython && (isValidPython || isValidSearch)) {
@@ -716,7 +716,7 @@ async function sendMessage() {
                             <div class="python-analysis-actions">
                                 <button type="button" class="copy-button" aria-label="複製程式碼">
                                     <span class="copy-btn-icon copy-btn-icon-default">${CODE_BLOCK_COPY_ICON}</span>
-                                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPIED_ICON}</span>
+                                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPY_SUCCESS_ICON}</span>
                                 </button>
                                 <div class="status-icon">
                                     ${CHEVRON_DOWN_ICON}
@@ -729,7 +729,7 @@ async function sendMessage() {
                                     <span>python</span>
                                     <button type="button" class="copy-button" aria-label="複製程式碼">
                                         <span class="copy-btn-icon copy-btn-icon-default">${CODE_BLOCK_COPY_ICON}</span>
-                                        <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPIED_ICON}</span>
+                                        <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPY_SUCCESS_ICON}</span>
                                     </button>
                                 </div>
                                 <pre><code>${escapedCode}</code></pre>

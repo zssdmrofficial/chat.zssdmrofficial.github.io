@@ -185,7 +185,7 @@ function renderConversationList(conversations) {
         editBtn.className = 'edit-conv-btn';
         editBtn.title = '重新命名此對話';
         editBtn.innerHTML = `
-            ${CONV_EDIT_ICON}
+            ${CHAT_EDIT_ICON}
         `;
         editBtn.addEventListener('click', (ev) => {
             ev.stopPropagation();
@@ -238,7 +238,7 @@ function renderConversationList(conversations) {
         deleteBtn.className = 'delete-conv-btn';
         deleteBtn.title = '刪除此對話';
         deleteBtn.innerHTML = `
-            ${CONV_DELETE_ICON}
+            ${CHAT_DELETE_ICON}
         `;
         deleteBtn.addEventListener('click', (ev) => {
             ev.stopPropagation();

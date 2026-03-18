@@ -17,15 +17,15 @@ function getToolContent(tool) {
 }
 
 function getToolIconMarkup(tool) {
-    if (!tool) return DEFAULT_TOOL_PILL_ICON;
+    if (!tool) return ATTACHED_DATA_ICON;
     if (typeof tool.icon === 'function') {
         const value = tool.icon();
-        return (typeof value === 'string' && value.trim()) ? value : DEFAULT_TOOL_PILL_ICON;
+        return (typeof value === 'string' && value.trim()) ? value : ATTACHED_DATA_ICON;
     }
     if (typeof tool.icon === 'string' && tool.icon.trim()) {
         return tool.icon;
     }
-    return DEFAULT_TOOL_PILL_ICON;
+    return ATTACHED_DATA_ICON;
 }
 
 function updatePromptToolsCounter() {
@@ -142,7 +142,7 @@ function renderPromptTools() {
 
     accordionHeader.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="tool-pill-icon">${DEFAULT_TOOL_PILL_ICON}</div>
+            <div class="tool-pill-icon">${ATTACHED_DATA_ICON}</div>
             <span class="tool-pill-label">${attachLabel}</span>
         </div>
         <div class="accordion-chevron" style="transition: transform 0.2s; transform: ${isAttachedDataAccordionOpen ? 'rotate(180deg)' : 'rotate(0deg)'}">${CHEVRON_DOWN_ICON}</div>
@@ -208,7 +208,7 @@ function renderThinkingPill() {
     const levelLabel = THINKING_LEVELS.find(l => l.value === currentThinkingLevel)?.label || '';
 
     pill.innerHTML = `
-        <div class="tool-pill-icon">${THINKING_TOOL_ICON}</div>
+        <div class="tool-pill-icon">${THINKING_ICON}</div>
         <span class="tool-pill-label">${levelLabel}</span>
         <div class="thinking-pill-chevron">${CHEVRON_DOWN_ICON}</div>
     `;
@@ -314,7 +314,7 @@ function updateSendButtonState() {
     const hasText = inputEl.value.trim() !== '';
     sendButtonEl.disabled = !isAwaitingResponse && !hasText;
     sendButtonEl.setAttribute('aria-busy', isAwaitingResponse.toString());
-    const iconMarkup = isAwaitingResponse ? SEND_ICON_PENDING : SEND_ICON_DEFAULT;
+    const iconMarkup = isAwaitingResponse ? STOP_GENERATION_ICON : SEND_ICON_DEFAULT;
     if (sendButtonEl.innerHTML.trim() !== iconMarkup.trim()) {
         sendButtonEl.innerHTML = iconMarkup;
     }
@@ -561,7 +561,7 @@ function markdownToHtml(mdText) {
                 <span>${lang}</span>
                 <button type="button" class="copy-button" aria-label="複製程式碼">
                     <span class="copy-btn-icon copy-btn-icon-default">${CODE_BLOCK_COPY_ICON}</span>
-                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPIED_ICON}</span>
+                    <span class="copy-btn-icon copy-btn-icon-success">${CODE_BLOCK_COPY_SUCCESS_ICON}</span>
                 </button>
             `;
 
