@@ -363,7 +363,7 @@ async function regenerateMessage(modelMessageIndex) {
                         <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
                             <div class="status-text">
                                 ${SEARCH_TOOL_ICON}
-                                <span>模型正在使用 DuckDuckGo 搜尋</span>
+                                <span>模型正在搜尋</span>
                             </div>
                             <div class="python-analysis-actions">
                                 <div class="status-icon">
@@ -820,7 +820,7 @@ async function sendMessage() {
                         <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
                             <div class="status-text">
                                 ${SEARCH_TOOL_ICON}
-                                <span>模型正在使用 DuckDuckGo 搜尋</span>
+                                <span>模型正在搜尋</span>
                             </div>
                             <div class="python-analysis-actions">
                                 <div class="status-icon">
