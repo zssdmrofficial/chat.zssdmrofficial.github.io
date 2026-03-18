@@ -11,4 +11,3 @@ let forceSearchNextTurn = false;
 let animatingConversationId = null;
 let abortController = null;
 let currentThinkingLevel = 'MINIMAL';
-

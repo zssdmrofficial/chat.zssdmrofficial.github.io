@@ -1,14 +1,12 @@
 const readStaticTextSync = (path) => {
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", path, false);
+  xhr.open('GET', path, false);
   xhr.send(null);
   if (xhr.status !== 0 && (xhr.status < 200 || xhr.status >= 300)) {
     throw new Error(`Failed to load ${path}: ${xhr.status}`);
   }
-  return xhr.responseText ?? "";
+  return xhr.responseText ?? '';
 };
-
-
 
 const SYSTEM_INSTRUCTION = `
 ## 一、角色定位

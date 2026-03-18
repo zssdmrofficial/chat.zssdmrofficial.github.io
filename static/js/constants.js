@@ -1,4 +1,4 @@
-const API_URL = "https://gemini-api.zssdmr.dpdns.org/";
+const API_URL = 'https://gemini-api.zssdmr.dpdns.org/';
 
 const PYTHON_SYSTEM_PROMPT_ADDITION = `
 【能力擴充通知】
@@ -48,19 +48,18 @@ const SEARCH_SYSTEM_PROMPT_ADDITION = `
 1. **執行判斷準則**：除非使用者特別強調執行的語氣（例如：「幫我搜尋」），或是問題需要最新資訊才能回答，否則不需要特別呼叫 \`execute-search\`。
 `;
 
-
 const PYTHON_BLOCK_REGEX = /```execute-python\s*([\s\S]*?)```/;
 const SEARCH_BLOCK_REGEX = /```execute-search\s*([\s\S]*?)```/;
 
 const THINKING_LEVELS = [
-    { value: 'MINIMAL', label: 'Minimal' },
-    { value: 'LOW', label: 'Low' },
-    { value: 'MEDIUM', label: 'Medium' },
-    { value: 'HIGH', label: 'High' },
+  { value: 'MINIMAL', label: 'Minimal' },
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
 ];
 
 const MESSAGE_COPY_FEEDBACK_DURATION = 2000;
 const FIRESTORE_BATCH_LIMIT = 450;
 const API_MAX_RETRY_LOOPS = 5;
 const DEFAULT_CHAT_TITLE = 'New chat';
-const PYTHON_API_URL = "https://zssdmr-python.hf.space/";
+const PYTHON_API_URL = 'https://zssdmr-python.hf.space/';
