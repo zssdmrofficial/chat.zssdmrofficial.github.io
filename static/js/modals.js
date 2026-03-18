@@ -254,6 +254,7 @@ function showSettingsModal() {
     isSearchEnabled = e.target.checked;
     if (!isSearchEnabled) {
       forceSearchNextTurn = false;
+      if (typeof renderPromptTools === 'function') renderPromptTools();
     }
     if (currentUser) {
       try {

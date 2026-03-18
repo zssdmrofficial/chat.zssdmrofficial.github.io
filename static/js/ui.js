@@ -66,6 +66,10 @@ function renderPromptTools() {
   const activeLabel =
     activeCount > 0 ? `附加功能 (${activeCount})` : '附加功能';
 
+  if (activeCount > 0) {
+    promptPill.classList.add('active');
+  }
+
   promptPill.innerHTML = `
         <div class="tool-pill-icon">${ATTACH_TOOL_ICON}</div>
         <span class="tool-pill-label">${activeLabel}</span>

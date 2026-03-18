@@ -667,6 +667,7 @@ async function sendMessage() {
     composedText +=
       '\n\n【系統強制指令】：使用者已按下「強制搜尋」按鈕，要求你必須使用網路搜尋。請你**務必**優先輸出 `execute-search` 程式碼區塊來查詢相關資訊，取得搜尋結果後再回答問題，請勿未經搜尋直接回答。此外，請將這次搜尋視為探索一個「全新的事物」，完全拋棄任何既有的偏見、主觀意識或背景知識，僅基於搜尋到的客觀事實進行理解與回答。';
     forceSearchNextTurn = false;
+    if (typeof renderPromptTools === 'function') renderPromptTools();
   }
 
   if (currentUser && !currentConversationId && !isTempChatMode) {
