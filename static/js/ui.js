@@ -245,7 +245,14 @@ function renderThinkingPill() {
     item.type = 'button';
     item.className = 'thinking-dropdown-item';
     if (currentThinkingLevel === level.value) item.classList.add('selected');
-    item.textContent = level.label;
+    
+    let iconSvg = '';
+    if (level.value === 'MINIMAL') iconSvg = THINKING_ICON_LEVEL_MINIMAL;
+    else if (level.value === 'LOW') iconSvg = THINKING_ICON_LEVEL_LOW;
+    else if (level.value === 'MEDIUM') iconSvg = THINKING_ICON_LEVEL_MEDIUM;
+    else if (level.value === 'HIGH') iconSvg = THINKING_ICON_LEVEL_HIGH;
+
+    item.innerHTML = '<div class="tool-pill-icon">' + iconSvg + '</div><span class="tool-pill-label">' + level.label + '</span>';
     item.addEventListener('click', (e) => {
       e.stopPropagation();
       currentThinkingLevel = level.value;

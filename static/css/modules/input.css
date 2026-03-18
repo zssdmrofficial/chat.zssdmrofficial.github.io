@@ -330,7 +330,8 @@ button#send-button svg {
     font-weight: 500;
 }
 
-.prompt-dropdown-item .tool-pill-icon svg {
+.prompt-dropdown-item .tool-pill-icon svg,
+.thinking-dropdown-item .tool-pill-icon svg {
     width: 16px;
     height: 16px;
 }
