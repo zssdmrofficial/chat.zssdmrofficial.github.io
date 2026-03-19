@@ -162,7 +162,7 @@ function showSettingsModal() {
                         <div class="settings-item">
                             <div class="settings-item-info">
                                 <div class="settings-item-label">搜尋功能</div>
-                                <div class="settings-item-desc">啟用後可透過 DuckDuckGo 進行網路搜尋。</div>
+                                <div class="settings-item-desc">啟用後可透過 SearXNG 進行網路搜尋。</div>
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="search-toggle" ${isSearchEnabled ? 'checked' : ''}>

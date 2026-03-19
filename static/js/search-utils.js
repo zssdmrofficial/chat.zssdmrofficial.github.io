@@ -1,11 +1,12 @@
-const DDG_SEARCH_TIMEOUT_MS = 30000;
-const DDG_SEARCH_RESULTS_LIMIT = 6;
-const DDG_SNIPPET_LIMIT = 180;
+const SEARXNG_PROXY_URL = 'https://searxng-proxy.zssdmrofficial.workers.dev/';
+const SEARCH_TIMEOUT_MS = 30000;
+const SEARCH_RESULTS_LIMIT = 6;
+const SNIPPET_LIMIT = 180;
 
 async function fetchWithTimeout(
   url,
   options = {},
-  timeoutMs = DDG_SEARCH_TIMEOUT_MS,
+  timeoutMs = SEARCH_TIMEOUT_MS,
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(
@@ -24,59 +25,42 @@ async function fetchWithTimeout(
   }
 }
 
-async function runDDGSearch(query) {
-  const WORKER_URL = 'https://ddg-proxy.zssdmrofficial.workers.dev/';
-  const proxyUrl = WORKER_URL + '?q=' + encodeURIComponent(query);
+async function runSearch(query) {
+  const proxyUrl = SEARXNG_PROXY_URL + '?q=' + encodeURIComponent(query);
   const options = {
     method: 'GET',
     headers: {
-      Accept: 'text/html',
+      Accept: 'application/json',
     },
   };
 
   const res = await fetchWithTimeout(proxyUrl, options);
   if (!res.ok) {
-    throw new Error(`DuckDuckGo HTTP 錯誤: ${res.status}`);
+    throw new Error(`SearXNG HTTP 錯誤: ${res.status}`);
   }
 
-  const html = await res.text();
-  const results = parseDDGHtml(html);
-  return { results };
-}
-function parseDDGHtml(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const resultElements = doc.querySelectorAll('.result');
+  const data = await res.json();
+  const rawResults = data.results || [];
   const results = [];
 
-  for (let i = 0; i < resultElements.length; i++) {
-    if (results.length >= DDG_SEARCH_RESULTS_LIMIT) break;
+  for (let i = 0; i < rawResults.length; i++) {
+    if (results.length >= SEARCH_RESULTS_LIMIT) break;
 
-    const el = resultElements[i];
-    const titleEl = el.querySelector('.result__title .result__a');
-    const snippetEl = el.querySelector('.result__snippet');
+    const item = rawResults[i];
+    const title = (item.title || '').trim();
+    const url = (item.url || '').trim();
+    let snippet = (item.content || '').trim();
 
-    if (titleEl && snippetEl) {
-      let title = titleEl.textContent.trim();
-      let snippet = snippetEl.textContent.trim();
-      let link = titleEl.getAttribute('href');
+    if (!title || !url) continue;
 
-      if (link && link.startsWith('//duckduckgo.com/l/?uddg=')) {
-        try {
-          const urlStr = link.substring(link.indexOf('uddg=') + 5);
-          const decoded = decodeURIComponent(urlStr);
-          if (decoded) link = decoded;
-        } catch (e) {}
-      }
-
-      if (snippet.length > DDG_SNIPPET_LIMIT) {
-        snippet = snippet.substring(0, DDG_SNIPPET_LIMIT) + '...';
-      }
-
-      results.push({ title, content: snippet, url: link });
+    if (snippet.length > SNIPPET_LIMIT) {
+      snippet = snippet.substring(0, SNIPPET_LIMIT) + '...';
     }
+
+    results.push({ title, content: snippet, url });
   }
-  return results;
+
+  return { results };
 }
 
 function formatSearchContext(results) {
@@ -94,10 +78,10 @@ function formatSearchContext(results) {
     return parts.join('\n');
   });
 
-  return `【即時搜尋結果】(來源：DuckDuckGo)\n請優先使用以下結果回答，若資訊不足請明確說明。\n${lines.join('\n')}`;
+  return `【即時搜尋結果】(來源：SearXNG)\n請優先使用以下結果回答，若資訊不足請明確說明。\n${lines.join('\n')}`;
 }
 
 async function buildSearchContextPayload(query) {
-  const { results } = await runDDGSearch(query);
+  const { results } = await runSearch(query);
   return formatSearchContext(results);
 }
