@@ -1,4 +1,7 @@
 const API_URL = 'https://gemini-api.zssdmr.dpdns.org/';
+const PYTHON_API_URL = 'https://zssdmr-python.hf.space/';
+const SEARXNG_PROXY_URL = 'https://searxng-proxy.zssdmr.dpdns.org/';
+const BROWSE_PROXY_URL = 'https://browse-proxy.zssdmr.dpdns.org/';
 
 const PYTHON_SYSTEM_PROMPT_ADDITION = `
 【能力擴充通知】
@@ -44,13 +47,26 @@ const SEARCH_SYSTEM_PROMPT_ADDITION = `
 最新台灣新聞
 \`\`\`
 
+你也擁有瀏覽網頁的能力：
+當搜尋結果的摘要太簡短、資訊不足以回答問題，或是使用者直接貼上一個網址請你查看時，你可以輸出一塊標頭為 \`execute-browse\` 的程式碼區塊來讀取該網頁的完整內容：
+- 區塊內只需包含你想瀏覽的「完整 URL」（一次只能瀏覽一個網址）。
+- 系統會自動擷取該網頁的文字內容並回傳給你。
+
+格式範例：
+\`\`\`execute-browse
+https://example.com/some-article
+\`\`\`
+
 請注意以下重要事項：
 1. **執行判斷準則**：除非使用者特別強調執行的語氣（例如：「幫我搜尋」），或是問題需要最新資訊才能回答，否則不需要特別呼叫 \`execute-search\`。
 2. **客觀與零偏見準則**：請將這次搜尋與後續回答視為接觸一個「全新的事物」。請拋棄任何既有的偏見、主觀意識或背景知識，完全基於搜尋的客觀結果來進行分析與回答。
+3. **瀏覽網頁的判斷準則**：當搜尋結果不足以回答問題時，請主動使用 \`execute-browse\` 來讀取搜尋結果中最相關的網頁。當使用者貼上網址時，也請直接使用 \`execute-browse\` 來讀取內容。
+4. **一次一個工具**：每次回覆中只能使用一個工具（\`execute-search\`、\`execute-browse\` 或 \`execute-python\`），不可同時使用多個。
 `;
 
 const PYTHON_BLOCK_REGEX = /```execute-python\s*([\s\S]*?)```/;
 const SEARCH_BLOCK_REGEX = /```execute-search\s*([\s\S]*?)```/;
+const BROWSE_BLOCK_REGEX = /```execute-browse\s*([\s\S]*?)```/;
 
 const THINKING_LEVELS = [
   { value: 'MINIMAL', label: 'Minimal' },
@@ -63,4 +79,3 @@ const MESSAGE_COPY_FEEDBACK_DURATION = 2000;
 const FIRESTORE_BATCH_LIMIT = 450;
 const API_MAX_RETRY_LOOPS = 5;
 const DEFAULT_CHAT_TITLE = 'New chat';
-const PYTHON_API_URL = 'https://zssdmr-python.hf.space/';

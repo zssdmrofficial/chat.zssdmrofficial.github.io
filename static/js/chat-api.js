@@ -257,16 +257,23 @@ async function regenerateMessage(modelMessageIndex) {
       const searchMatch = isSearchEnabled
         ? responseText.match(SEARCH_BLOCK_REGEX)
         : null;
+      const browseMatch = isSearchEnabled
+        ? responseText.match(BROWSE_BLOCK_REGEX)
+        : null;
 
       const isValidPython = keepGoing && pythonMatch && pythonExecutorInstance;
       const isValidSearch = keepGoing && searchMatch;
+      const isValidBrowse = keepGoing && browseMatch && !isValidSearch;
 
       let thoughtHtml = '';
       if (thoughtText) {
         thoughtHtml = `<details class="thinking-details"><summary>${THINKING_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
       }
 
-      if (hasEncounteredPython && (isValidPython || isValidSearch)) {
+      if (
+        hasEncounteredPython &&
+        (isValidPython || isValidSearch || isValidBrowse)
+      ) {
         if (beforePythonText) {
           const beforeParts = thoughtText
             ? [
@@ -573,6 +580,96 @@ async function regenerateMessage(modelMessageIndex) {
         const userFeedbackMsg = {
           role: 'user',
           parts: [{ text: textForModel }],
+          displayText: '',
+          messageId: null,
+          isHidden: true,
+        };
+        history.push(userFeedbackMsg);
+
+        loadingId = showLoading();
+        continue;
+      } else if (isValidBrowse) {
+        const browseUrl = browseMatch[1].trim();
+
+        const indicatorId = `browse-exec-${Date.now()}`;
+        const escapedUrl = escapeHtml(browseUrl);
+        const browseIndicatorHtml = `
+                    <div class="python-analysis-indicator" id="${indicatorId}">
+                        <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
+                            <div class="status-text">
+                                ${BROWSE_TOOL_ICON}
+                                <span>模型正在瀏覽網頁</span>
+                            </div>
+                            <div class="python-analysis-actions">
+                                <div class="status-icon">
+                                    ${CHEVRON_DOWN_ICON}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="python-analysis-code">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span>browse url</span>
+                                </div>
+                                <pre><code>${escapedUrl}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+        const bParts = thoughtText
+          ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }]
+          : [{ text: responseText }];
+        let bDisplay = browseIndicatorHtml;
+        if (!beforePythonText && thoughtHtml) {
+          bDisplay = thoughtHtml + bDisplay;
+        }
+
+        const newModelMsg = {
+          role: 'model',
+          parts: bParts,
+          displayText: bDisplay,
+          isHtml: true,
+        };
+        history.push(newModelMsg);
+        renderMessage(
+          'model',
+          responseText,
+          false,
+          bDisplay,
+          history.length - 1,
+          true,
+          true,
+        );
+
+        if (currentUser && activeConvId) {
+          const bCombinedContent = thoughtText
+            ? `[Thinking]\n${thoughtText}\n\n${responseText}`
+            : responseText;
+          const msgId = await addMessage(
+            activeConvId,
+            'model',
+            bCombinedContent,
+            bDisplay,
+            true,
+          );
+          newModelMsg.messageId = msgId;
+        }
+
+        let browseContext = '';
+        const execLoadingId = showLoading();
+        try {
+          browseContext = await buildBrowseContextPayload(browseUrl);
+          if (!browseContext) browseContext = '無法讀取該網頁內容。';
+        } catch (err) {
+          browseContext = `網頁讀取失敗: ${err.message}`;
+        } finally {
+          removeLoading(execLoadingId);
+        }
+
+        const userFeedbackMsg = {
+          role: 'user',
+          parts: [{ text: browseContext }],
           displayText: '',
           messageId: null,
           isHidden: true,
@@ -902,16 +999,23 @@ async function sendMessage() {
       const searchMatch = isSearchEnabled
         ? responseText.match(SEARCH_BLOCK_REGEX)
         : null;
+      const browseMatch = isSearchEnabled
+        ? responseText.match(BROWSE_BLOCK_REGEX)
+        : null;
 
       const isValidPython = keepGoing && pythonMatch && pythonExecutorInstance;
       const isValidSearch = keepGoing && searchMatch;
+      const isValidBrowse = keepGoing && browseMatch && !isValidSearch;
 
       let thoughtHtml = '';
       if (thoughtText) {
         thoughtHtml = `<details class="thinking-details"><summary>${THINKING_ICON}<span>Show Thinking</span>${CHEVRON_DOWN_ICON}</summary><div class="thinking-details-content">${markdownToHtml(thoughtText)}</div></details>`;
       }
 
-      if (hasEncounteredPython && (isValidPython || isValidSearch)) {
+      if (
+        hasEncounteredPython &&
+        (isValidPython || isValidSearch || isValidBrowse)
+      ) {
         if (beforePythonText) {
           const beforeParts = thoughtText
             ? [
@@ -1221,6 +1325,96 @@ async function sendMessage() {
         const userFeedbackMsg = {
           role: 'user',
           parts: [{ text: textForModel }],
+          displayText: '',
+          messageId: null,
+          isHidden: true,
+        };
+        history.push(userFeedbackMsg);
+
+        loadingId = showLoading();
+        continue;
+      } else if (isValidBrowse) {
+        const browseUrl = browseMatch[1].trim();
+
+        const indicatorId = `browse-exec-${Date.now()}`;
+        const escapedUrl = escapeHtml(browseUrl);
+        const browseIndicatorHtml = `
+                    <div class="python-analysis-indicator" id="${indicatorId}">
+                        <div class="python-analysis-header" onclick="if(!event.target.closest('.copy-button')){this.parentElement.classList.toggle('expanded');scheduleBubbleShapeRefresh();}">
+                            <div class="status-text">
+                                ${BROWSE_TOOL_ICON}
+                                <span>模型正在瀏覽網頁</span>
+                            </div>
+                            <div class="python-analysis-actions">
+                                <div class="status-icon">
+                                    ${CHEVRON_DOWN_ICON}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="python-analysis-code">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span>browse url</span>
+                                </div>
+                                <pre><code>${escapedUrl}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+        const bParts = thoughtText
+          ? [{ text: `[Thinking]\n${thoughtText}` }, { text: responseText }]
+          : [{ text: responseText }];
+        let bDisplay = browseIndicatorHtml;
+        if (!beforePythonText && thoughtHtml) {
+          bDisplay = thoughtHtml + bDisplay;
+        }
+
+        const newModelMsg = {
+          role: 'model',
+          parts: bParts,
+          displayText: bDisplay,
+          isHtml: true,
+        };
+        history.push(newModelMsg);
+        renderMessage(
+          'model',
+          responseText,
+          false,
+          bDisplay,
+          history.length - 1,
+          true,
+          true,
+        );
+
+        if (currentUser && activeConvId) {
+          const bCombinedContent = thoughtText
+            ? `[Thinking]\n${thoughtText}\n\n${responseText}`
+            : responseText;
+          const msgId = await addMessage(
+            activeConvId,
+            'model',
+            bCombinedContent,
+            bDisplay,
+            true,
+          );
+          newModelMsg.messageId = msgId;
+        }
+
+        let browseContext = '';
+        const execLoadingId = showLoading();
+        try {
+          browseContext = await buildBrowseContextPayload(browseUrl);
+          if (!browseContext) browseContext = '無法讀取該網頁內容。';
+        } catch (err) {
+          browseContext = `網頁讀取失敗: ${err.message}`;
+        } finally {
+          removeLoading(execLoadingId);
+        }
+
+        const userFeedbackMsg = {
+          role: 'user',
+          parts: [{ text: browseContext }],
           displayText: '',
           messageId: null,
           isHidden: true,

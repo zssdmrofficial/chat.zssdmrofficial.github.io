@@ -1,4 +1,3 @@
-const SEARXNG_PROXY_URL = 'https://searxng-proxy.zssdmr.dpdns.org/';
 const SEARCH_TIMEOUT_MS = 30000;
 const SEARCH_RESULTS_LIMIT = 6;
 const SNIPPET_LIMIT = 180;
@@ -84,4 +83,41 @@ function formatSearchContext(results) {
 async function buildSearchContextPayload(query) {
   const { results } = await runSearch(query);
   return formatSearchContext(results);
+}
+
+const BROWSE_CONTENT_LIMIT = 15000;
+const BROWSE_TIMEOUT_MS = 30000;
+
+async function runBrowse(url) {
+  const proxyUrl = BROWSE_PROXY_URL + '?url=' + encodeURIComponent(url);
+
+  const res = await fetchWithTimeout(
+    proxyUrl,
+    {
+      method: 'GET',
+      headers: { Accept: 'text/plain' },
+    },
+    BROWSE_TIMEOUT_MS,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Browse HTTP error: ${res.status}`);
+  }
+
+  let content = await res.text();
+  if (content.length > BROWSE_CONTENT_LIMIT) {
+    content =
+      content.substring(0, BROWSE_CONTENT_LIMIT) + '\n\n[content truncated...]';
+  }
+  return content;
+}
+
+function formatBrowseContext(url, content) {
+  if (!content) return '';
+  return `【network page reading result】(source: ${url})\nThe following is the page content, please analyze it and answer the question based on the it.\n\n${content}`;
+}
+
+async function buildBrowseContextPayload(url) {
+  const content = await runBrowse(url);
+  return formatBrowseContext(url, content);
 }
