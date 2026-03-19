@@ -1,4 +1,4 @@
-const SEARXNG_PROXY_URL = 'https://searxng-proxy.zssdmrofficial.workers.dev/';
+const SEARXNG_PROXY_URL = 'https://searxng-proxy.zssdmr.dpdns.org/';
 const SEARCH_TIMEOUT_MS = 30000;
 const SEARCH_RESULTS_LIMIT = 6;
 const SNIPPET_LIMIT = 180;
