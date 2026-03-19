@@ -762,7 +762,7 @@ async function sendMessage() {
 
   if (isSearchEnabled && forceSearchNextTurn) {
     composedText +=
-      '\n\n【系統強制指令】：使用者已按下「強制搜尋」按鈕，要求你必須使用網路搜尋。請你**務必**優先輸出 `execute-search` 程式碼區塊來查詢相關資訊，取得搜尋結果後再回答問題，請勿未經搜尋直接回答。此外，請將這次搜尋視為探索一個「全新的事物」，完全拋棄任何既有的偏見、主觀意識或背景知識，僅基於搜尋到的客觀事實進行理解與回答。';
+      '\n\n【系統強制指令】：使用者已啟用「強制檢索」模式，要求你必須透過網路取得資訊後再回答，請勿未經檢索直接回答。請根據使用者的訊息內容判斷任務類型，選擇最合適的工具：\n- 若使用者的問題需要查詢最新資訊、時事、或進行關鍵字搜尋，請輸出 `execute-search` 程式碼區塊。\n- 若使用者提供了一個明確的網址(URL)要求你閱讀其內容，請輸出 `execute-browse` 程式碼區塊。\n此外，請將這次檢索視為探索一個「全新的事物」，完全拋棄任何既有的偏見、主觀意識或背景知識，僅基於檢索到的客觀事實進行理解與回答。';
     forceSearchNextTurn = false;
     if (typeof renderPromptTools === 'function') renderPromptTools();
   }

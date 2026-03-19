@@ -61,7 +61,7 @@ https://example.com/some-article
 1. **執行判斷準則**：除非使用者特別強調執行的語氣（例如：「幫我搜尋」），或是問題需要最新資訊才能回答，否則不需要特別呼叫 \`execute-search\`。
 2. **客觀與零偏見準則**：請將這次搜尋與後續回答視為接觸一個「全新的事物」。請拋棄任何既有的偏見、主觀意識或背景知識，完全基於搜尋的客觀結果來進行分析與回答。
 3. **瀏覽網頁的判斷準則**：當搜尋結果不足以回答問題時，請主動使用 \`execute-browse\` 來讀取搜尋結果中最相關的網頁。當使用者貼上網址時，也請直接使用 \`execute-browse\` 來讀取內容。
-4. **一次一個工具**：每次回覆中只能使用一個工具（\`execute-search\`、\`execute-browse\` 或 \`execute-python\`），不可同時使用多個。
+4. **一次一個工具**：每次回覆中只能使用一個工具（\`execute-search\`或\`execute-browse\`），不可同時使用多個。
 `;
 
 const PYTHON_BLOCK_REGEX = /```execute-python\s*([\s\S]*?)```/;
