@@ -161,7 +161,7 @@ function showSettingsModal() {
                         </div>
                         <div class="settings-item">
                             <div class="settings-item-info">
-                                <div class="settings-item-label">搜尋與瀏覽功能</div>
+                                <div class="settings-item-label">檢索(搜尋與瀏覽)功能</div>
                                 <div class="settings-item-desc">啟用後可透過 SearXNG 進行網路搜尋並且瀏覽特定網址內容。</div>
                             </div>
                             <label class="switch">
