@@ -354,10 +354,8 @@ function updateSendButtonState() {
 }
 
 function adjustChatPadding() {
-  const inputContainer = document.querySelector('.input-container');
-  if (chatBoxEl && inputContainer) {
-    const h = inputContainer.offsetHeight;
-    chatBoxEl.style.paddingBottom = h + 20 + 'px';
+  if (chatBoxEl) {
+    chatBoxEl.style.paddingBottom = '';
   }
 }
 
