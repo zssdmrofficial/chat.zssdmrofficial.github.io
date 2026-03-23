@@ -152,7 +152,7 @@ function showSettingsModal() {
                         <div class="settings-item">
                             <div class="settings-item-info">
                                 <div class="settings-item-label">Python 執行工具</div>
-                                <div class="settings-item-desc">啟用後模型可執行 Python 程式碼進行數據分析與繪圖。</div>
+                                <div class="settings-item-desc">啟用後思想小助手可執行 Python 程式碼進行數據分析與繪圖。</div>
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="python-toggle" ${isPythonEnabled ? 'checked' : ''}>
@@ -162,7 +162,7 @@ function showSettingsModal() {
                         <div class="settings-item">
                             <div class="settings-item-info">
                                 <div class="settings-item-label">檢索(搜尋與瀏覽)功能</div>
-                                <div class="settings-item-desc">啟用後可透過 SearXNG 進行網路搜尋並且瀏覽特定網址內容。</div>
+                                <div class="settings-item-desc">啟用後思想小助手可透過 SearXNG 進行網路搜尋並且瀏覽特定網址內容。</div>
                             </div>
                             <label class="switch">
                                 <input type="checkbox" id="search-toggle" ${isSearchEnabled ? 'checked' : ''}>
@@ -189,14 +189,14 @@ function showSettingsModal() {
                         <div class="settings-item">
                             <div class="settings-item-info">
                                 <div class="settings-item-label">變更密碼</div>
-                                <div class="settings-item-desc">修改您的登入密碼。</div>
+                                <div class="settings-item-desc">修改同志你的登入密碼。</div>
                             </div>
                             <button class="settings-btn danger" id="change-password-btn">變更密碼</button>
                         </div>
                         <div class="settings-item">
                             <div class="settings-item-info">
                                 <div class="settings-item-label">刪除帳號</div>
-                                <div class="settings-item-desc">永久刪除您的帳號及所有相關資料。</div>
+                                <div class="settings-item-desc">永久刪除同志你的帳號及所有相關資料。</div>
                             </div>
                             <button class="settings-btn danger" id="delete-account-btn">刪除帳號</button>
                         </div>
