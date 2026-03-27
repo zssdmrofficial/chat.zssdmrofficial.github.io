@@ -131,6 +131,7 @@ async function loadMessages(convId) {
         displayText,
         messageId: d.id,
         isHtml: data.isHtml === true,
+        imageDataUrls: data.imageDataUrls || null,
       };
     });
     currentConversationId = convId;
@@ -149,6 +150,7 @@ async function addMessage(
   displayContent = null,
   isHtml = false,
   parts = null,
+  imageDataUrls = null,
 ) {
   if (!convId) return null;
   const user = auth.currentUser;
@@ -158,7 +160,7 @@ async function addMessage(
       .collection('conversations')
       .doc(convId)
       .collection('messages');
-    const docRef = await messagesRef.add({
+    const docData = {
       role,
       content,
       displayContent: displayContent || content,
@@ -166,7 +168,11 @@ async function addMessage(
       parts: parts || [{ text: content }],
       userId: user.uid,
       ts: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+    if (imageDataUrls && imageDataUrls.length > 0) {
+      docData.imageDataUrls = imageDataUrls;
+    }
+    const docRef = await messagesRef.add(docData);
     await db.collection('conversations').doc(convId).update({
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
